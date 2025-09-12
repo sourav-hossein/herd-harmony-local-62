@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Goat } from '@/types/goat';
+import BreedingAdvisorPanel from './BreedingAdvisorPanel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface BreedingFormProps {
   does: Goat[];
@@ -50,8 +53,10 @@ export default function BreedingForm({ does, bucks, onSubmit, onCancel }: Breedi
         <DialogHeader>
           <DialogTitle>Record Breeding</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid gap-2">
             <Label htmlFor="doe">Select Doe</Label>
             <Select value={selectedDoe} onValueChange={setSelectedDoe}>
               <SelectTrigger>
@@ -141,8 +146,17 @@ export default function BreedingForm({ does, bucks, onSubmit, onCancel }: Breedi
               Record Breeding
             </Button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            </form>
+          </div>
+          <div className="space-y-4">
+            <BreedingAdvisorPanel 
+              selectedBuck={bucks.find(b => b.id === selectedBuck) || null}
+              selectedDoe={does.find(d => d.id === selectedDoe) || null}
+              allGoats={[...bucks, ...does]}
+            />
+          </div>
+        </div>
+        </DialogContent>
+      </Dialog>
   );
 }

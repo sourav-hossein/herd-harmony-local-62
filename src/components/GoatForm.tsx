@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BreedingAdvisor } from '@/lib/breedingAdvisor';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Info, Camera } from 'lucide-react';
+import GeneticsSection from './genetics/GeneticsSection';
+import { GeneticPredictor } from '@/lib/predictGenetics';
 
 interface GoatFormProps {
   goat?: Goat;
@@ -37,7 +39,13 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
     notes: '',
     fatherId: undefined as string | undefined,
     motherId: undefined as string | undefined,
-    // mediaFiles: [] as MediaFile[],
+    genetics: {
+      coatColor: '',
+      hornStatus: 'horned' as const,
+      fertilityScore: 5,
+      milkYieldGenetics: 100,
+      hornGenotype: 'hh' as const
+    }
   });
 
   const [pedigreeValidation, setPedigreeValidation] = useState<{
@@ -60,6 +68,13 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
         notes: goat.notes || '',
         fatherId: goat.fatherId,
         motherId: goat.motherId,
+        genetics: goat.genetics || {
+          coatColor: goat.color || '',
+          hornStatus: goat.hornStatus || 'horned',
+          fertilityScore: 5,
+          milkYieldGenetics: 100,
+          hornGenotype: 'hh' as const
+        }
       });
     } else {
       setFormData({
@@ -74,7 +89,13 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
         notes: '',
         fatherId: undefined,
         motherId: undefined,
-        // mediaFiles: [],
+        genetics: {
+          coatColor: '',
+          hornStatus: 'horned',
+          fertilityScore: 5,
+          milkYieldGenetics: 100,
+          hornGenotype: 'hh' as const
+        }
       });
     }
   }, [goat]);
@@ -297,6 +318,12 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
             })}
             config={mediaConfig}
           /> */}
+
+          {/* Genetics Section */}
+          <GeneticsSection
+            genetics={formData.genetics}
+            onGeneticsChange={(genetics) => setFormData({ ...formData, genetics })}
+          />
 
           {/* Parentage Information */}
           <Card>
