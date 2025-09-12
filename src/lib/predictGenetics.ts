@@ -91,7 +91,7 @@ export class GeneticPredictor {
 
     return {
       coatColor: prediction.coatColor,
-      hornStatus: prediction.hornStatus,
+      hornStatus: prediction.hornStatus as 'horned' | 'polled' | 'disbudded',
       hornGenotype: prediction.hornGenotype,
       fertilityScore: prediction.estimatedFertility,
       milkYieldGenetics: prediction.estimatedMilkYield

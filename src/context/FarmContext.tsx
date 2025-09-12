@@ -14,6 +14,10 @@ interface FarmData {
   health: HealthRecord[];
   feeds: Feed[];
   metadata: FarmMeta | null;
+  // Grazing management data
+  pastureHealthLogs?: any[];
+  rotationPlans?: any[];
+  grazingLogs?: any[];
 }
 
 interface FarmContextType {

@@ -59,6 +59,7 @@ export interface Pasture {
     restPeriod: number;
   };
   currentlyGrazing?: string[]; // goat IDs
+  lastGrazedAt?: string;
   createdAt: string;
   updatedAt?: string;
 }

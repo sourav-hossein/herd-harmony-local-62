@@ -10,10 +10,17 @@ import {
   Plus, 
   Target,
   Calculator,
-  Users 
+  Users,
+  Activity,
+  RotateCcw,
+  Zap
 } from 'lucide-react';
 import { Pasture } from '@/types/farm';
 import { useFarm } from '@/context/FarmContext';
+import { grazingService } from '@/services/grazingService';
+import PastureHealthTracker from './PastureHealthTracker';
+import RotationPlanner from './RotationPlanner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import * as turf from '@turf/turf';
 import 'leaflet/dist/leaflet.css';
 
@@ -139,9 +146,9 @@ export default function PastureMap() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Pastures & Grazing</h2>
+          <h2 className="text-2xl font-bold">Pastures & Grazing Management</h2>
           <p className="text-muted-foreground">
-            Manage your grazing areas and rotation schedule
+            Comprehensive grazing management with mapping, health tracking, and rotation planning
           </p>
         </div>
         <Button 
@@ -156,6 +163,29 @@ export default function PastureMap() {
           )}
         </Button>
       </div>
+
+      {/* Tabs for different management views */}
+      <Tabs defaultValue="map" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="map" className="flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            Map & Pastures
+          </TabsTrigger>
+          <TabsTrigger value="health" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Health Tracking
+          </TabsTrigger>
+          <TabsTrigger value="rotation" className="flex items-center gap-2">
+            <RotateCcw className="w-4 h-4" />
+            Rotation Planning
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="map" className="space-y-6">
 
       {/* Creation Panel */}
       {isCreating && (
@@ -369,6 +399,130 @@ export default function PastureMap() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="health">
+          <PastureHealthTracker pastures={pastures} />
+        </TabsContent>
+
+        <TabsContent value="rotation">
+          <RotationPlanner pastures={pastures} goats={goats} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Pasture Analytics Dashboard */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Pasture Analytics & Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold">{pastures.length}</div>
+                  <div className="text-sm text-muted-foreground">Total Pastures</div>
+                </div>
+                
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold">
+                    {pastures.reduce((sum, p) => sum + calculatePastureArea(p.radiusMeters).hectares, 0).toFixed(1)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Area (ha)</div>
+                </div>
+                
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold">
+                    {pastures.reduce((sum, p) => sum + getGoatsInPasture(p.id).length, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Animals Grazing</div>
+                </div>
+                
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold">
+                    {pastures.reduce((sum, p) => sum + estimateCarryingCapacity(p.radiusMeters), 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Capacity</div>
+                </div>
+              </div>
+
+              {/* Utilization Overview */}
+              <div className="mt-6">
+                <h4 className="font-semibold mb-4">Pasture Utilization</h4>
+                <div className="space-y-3">
+                  {pastures.map(pasture => {
+                    const currentGoats = getGoatsInPasture(pasture.id).length;
+                    const capacity = estimateCarryingCapacity(pasture.radiusMeters);
+                    const utilization = capacity > 0 ? (currentGoats / capacity) * 100 : 0;
+                    
+                    return (
+                      <div key={pasture.id} className="flex items-center gap-4">
+                        <div className="w-32 text-sm font-medium">{pasture.name}</div>
+                        <div className="flex-1 bg-muted rounded-full h-2 relative">
+                          <div 
+                            className={`h-2 rounded-full ${
+                              utilization > 100 ? 'bg-red-500' : 
+                              utilization > 80 ? 'bg-yellow-500' : 
+                              'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min(utilization, 100)}%` }}
+                          />
+                        </div>
+                        <div className="text-sm text-muted-foreground w-20">
+                          {currentGoats}/{capacity} ({utilization.toFixed(0)}%)
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              <div className="mt-6">
+                <h4 className="font-semibold mb-4">Smart Recommendations</h4>
+                <div className="space-y-2">
+                  {pastures.map(pasture => {
+                    const currentGoats = getGoatsInPasture(pasture.id).length;
+                    const capacity = estimateCarryingCapacity(pasture.radiusMeters);
+                    const utilization = capacity > 0 ? currentGoats / capacity : 0;
+                    
+                    if (utilization > 1.2) {
+                      return (
+                        <div key={pasture.id} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="font-medium text-red-800">⚠️ {pasture.name} is overstocked</div>
+                          <div className="text-sm text-red-600">
+                            Move {Math.ceil(currentGoats - capacity)} goats to prevent overgrazing
+                          </div>
+                        </div>
+                      );
+                    } else if (utilization < 0.5 && currentGoats > 0) {
+                      return (
+                        <div key={pasture.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="font-medium text-blue-800">💡 {pasture.name} has extra capacity</div>
+                          <div className="text-sm text-blue-600">
+                            Can accommodate {Math.floor(capacity - currentGoats)} more goats
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }).filter(Boolean)}
+                  
+                  {pastures.every(p => {
+                    const util = getGoatsInPasture(p.id).length / estimateCarryingCapacity(p.radiusMeters);
+                    return util >= 0.5 && util <= 1.2;
+                  }) && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="font-medium text-green-800">✅ All pastures are well-balanced</div>
+                      <div className="text-sm text-green-600">
+                        Current stocking rates are within optimal range
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

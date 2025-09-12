@@ -1,4 +1,24 @@
 
+export interface MediaFile {
+  id: string;
+  name: string;
+  path: string;
+  type: 'image' | 'video' | 'document';
+  size: number;
+  createdAt: Date;
+  // Extended properties for compatibility
+  goatId?: string;
+  url?: string;
+  primary?: boolean;
+  filename?: string;
+  uploadDate?: string | Date;
+  timestamp?: string | Date;
+  category?: 'birth' | 'health' | 'growth' | 'breeding' | 'general' | 'milestone' | 'weaning';
+  tags?: string[];
+  description?: string;
+  thumbnailUrl?: string;
+}
+
 export interface Goat {
   id: string;
   name: string;
@@ -7,6 +27,7 @@ export interface Goat {
   birthDate: Date;
   birthWeight?: number;
   gender: 'male' | 'female';
+  sex?: 'male' | 'female'; // Alias for compatibility
   castrated?: boolean;
   status: 'active' | 'sold' | 'deceased' | 'archived';
   breedingStatus: '' | 'pregnant' | 'lactating' | 'resting' | 'kid' | 'active';
@@ -25,6 +46,10 @@ export interface Goat {
   shedId?: string;
   partitionId?: string;
   pastureId?: string;
+  // Media properties
+  imageId?: string;
+  photoPath?: string;
+  mediaFiles?: MediaFile[];
   // Genetic traits for pedigree
   genetics?: {
     coatColor: string;
