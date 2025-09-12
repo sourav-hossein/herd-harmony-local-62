@@ -1,0 +1,358 @@
+const { google } = require('googleapis');
+const fs = require('fs');
+const fsp = require('fs').promises;
+const path = require('path');
+const express = require('express');
+const { shell, app } = require('electron');
+const keytar = require('keytar');
+const { PassThrough } = require('stream');
+
+const KEYTAR_SERVICE = 'GoatFarmDrive';
+const KEYTAR_ACCOUNT = 'refresh_token';
+const TOKEN_FILE_PATH = path.join(app.getPath('userData'), 'token.json');
+const RESUMABLE_THRESHOLD_BYTES = 10 * 1024 * 1024; // 10MB
+const APP_FOLDER_NAME = 'HerdHarmonyApp';
+
+class GoogleDriveService {
+    constructor() {
+        this.oauth2Client = null;
+        this.drive = null;
+    }
+
+    async loadSecrets() {
+        const secretsPath = path.join(app.getAppPath(), 'drive-secrets.json');
+        try {
+            const content = await fsp.readFile(secretsPath, 'utf8');
+            return JSON.parse(content);
+        } catch (err) {
+            console.error('Error loading client secret file:', err);
+            throw new Error('Could not load/parse drive-secrets.json. Please ensure it exists in the app directory.');
+        }
+    }
+
+    createOAuthClient(secrets) {
+        const { client_id, client_secret, redirect_uris } = secrets.installed;
+        const redirectUri = redirect_uris[0];
+        return new google.auth.OAuth2(client_id, client_secret, redirectUri);
+    }
+
+    async authorizeWithLoopback() {
+        const secrets = await this.loadSecrets();
+        const { redirect_uris } = secrets.installed;
+        const redirectUri = redirect_uris[0];
+
+        this.oauth2Client = this.createOAuthClient(secrets);
+
+        return new Promise((resolve, reject) => {
+            const expressApp = express();
+            const port = new URL(redirectUri).port;
+            let authServer;
+
+            const timeout = setTimeout(() => {
+                if (authServer) {
+                    authServer.close();
+                }
+                reject(new Error('Authentication timed out.'));
+            }, 300000); // 5 minutes timeout
+
+            authServer = expressApp.listen(port, () => {
+                const authUrl = this.oauth2Client.generateAuthUrl({
+                    access_type: 'offline',
+                    scope: ['https://www.googleapis.com/auth/drive.file', 'profile', 'email'],
+                    prompt: 'consent'
+                });
+                shell.openExternal(authUrl);
+            });
+
+            authServer.on('close', () => {
+                clearTimeout(timeout);
+                reject(new Error('Authentication server closed prematurely.'));
+            });
+
+            expressApp.get('/callback', async (req, res) => {
+                const code = req.query.code;
+                if (!code) {
+                    res.status(400).send('Missing authorization code.');
+                    if (authServer) {
+                        authServer.close();
+                    }
+                    return reject(new Error('Missing authorization code.'));
+                }
+
+                try {
+                    const { tokens } = await this.oauth2Client.getToken({ code, redirect_uri: redirectUri });
+                    this.oauth2Client.setCredentials(tokens);
+
+                    if (tokens.refresh_token) {
+                        try {
+                            await keytar.setPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT, tokens.refresh_token);
+                        } catch (keytarError) {
+                            console.warn('Keytar failed. Using file fallback.', keytarError);
+                            await fsp.writeFile(TOKEN_FILE_PATH, JSON.stringify({ refresh_token: tokens.refresh_token }));
+                        }
+                    }
+
+                    this.drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+                    res.send('<h1>Authentication successful!</h1><p>You can close this window.</p>');
+                    clearTimeout(timeout);
+                    if (authServer) {
+                        authServer.close();
+                    }
+                    resolve(this.oauth2Client);
+
+                } catch (error) {
+                    console.error('Error exchanging code for tokens:', error);
+                    res.status(500).send('Authentication failed.');
+                    clearTimeout(timeout);
+                    if (authServer) {
+                        authServer.close();
+                    }
+                    reject(error);
+                }
+            });
+        });
+    }
+
+    async restoreCredentials() {
+        let refreshToken;
+        try {
+            refreshToken = await keytar.getPassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT);
+        } catch (keytarError) {
+            console.warn('Keytar failed to get password. Checking fallback.', keytarError);
+        }
+
+        if (!refreshToken) {
+            try {
+                if (fs.existsSync(TOKEN_FILE_PATH)) {
+                    const tokenData = JSON.parse(await fsp.readFile(TOKEN_FILE_PATH, 'utf8'));
+                    refreshToken = tokenData.refresh_token;
+                }
+            } catch (fileError) {
+                console.error('Error reading fallback token file.', fileError);
+                return null;
+            }
+        }
+
+        if (!refreshToken) {
+            return null;
+        }
+
+        try {
+            const secrets = await this.loadSecrets();
+            this.oauth2Client = this.createOAuthClient(secrets);
+            this.oauth2Client.setCredentials({ refresh_token: refreshToken });
+            const { credentials } = await this.oauth2Client.refreshAccessToken();
+            this.oauth2Client.setCredentials(credentials);
+            this.drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+            return this.oauth2Client;
+        } catch (err) {
+            console.error('Failed to refresh access token:', err);
+            try {
+                const secrets = await this.loadSecrets();
+                this.oauth2Client = this.createOAuthClient(secrets);
+                this.oauth2Client.setCredentials({ refresh_token: refreshToken });
+                const { credentials } = await this.oauth2Client.refreshAccessToken();
+                this.oauth2Client.setCredentials(credentials);
+                this.drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+                return this.oauth2Client;
+            } catch (err) {
+                console.error('Failed to refresh access token:', err);
+                await this.clearCredentials();
+                return null;
+            }
+        }
+    }
+    async clearCredentials() {
+        try {
+            await keytar.deletePassword(KEYTAR_SERVICE, KEYTAR_ACCOUNT);
+        } catch (e) { console.warn('Keytar failed to delete password.', e); }
+        try {
+            if (fs.existsSync(TOKEN_FILE_PATH)) await fsp.unlink(TOKEN_FILE_PATH);
+        } catch (e) { console.error('Error deleting fallback token file.', e); }
+        this.oauth2Client = null;
+        this.drive = null;
+    }
+
+    async getProfileEmail() {
+        if (!this.oauth2Client) return null;
+        try {
+            const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
+            const { data } = await oauth2.userinfo.get();
+            return data.email;
+        } catch (error) {
+            console.error('Failed to get profile email:', error);
+            return null;
+        }
+    }
+
+    async executeWithRetry(requestFn, maxRetries = 5) {
+        let attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                const result = await requestFn();
+                return { ok: true, data: result.data };
+            } catch (error) {
+                const status = error.code || (error.response && error.response.status);
+                if ((status >= 500 && status < 600) || status === 429 || error.message.includes('EAI_AGAIN')) {
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        return { ok: false, error: `Request failed after ${maxRetries} attempts: ${error.message}` };
+                    }
+                    const backoff = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                    console.warn(`Request failed with status ${status}. Retrying in ${backoff.toFixed(0)}ms... (Attempt ${attempt}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                } else {
+                    return { ok: false, error };
+                }
+            }
+        }
+    }
+
+    async ensureAppFolder() {
+        const searchResult = await this.searchFile(`name='${APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder'`);
+        
+        if (searchResult.ok && searchResult.data.length > 0) {
+            return { ok: true, data: { id: searchResult.data[0].id } };
+        }
+
+        const createResult = await this.executeWithRetry(() => this.drive.files.create({
+            resource: { name: APP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' },
+            fields: 'id',
+        }));
+
+        if (createResult.ok) {
+        } else {
+            console.error('GDS: Failed to create app folder:', createResult.error);
+        }
+
+        return createResult;
+    }
+
+    async listFilesInFolder(folderId) {
+        const result = await this.executeWithRetry(() => this.drive.files.list({
+            q: `'${folderId}' in parents and trashed=false`,
+            fields: 'files(id, name, md5Checksum, modifiedTime, size)',
+            pageSize: 1000,
+        }));
+
+        if (!result.ok) return result;
+
+        const files = result.data.files.map(({ md5Checksum, ...rest }) => ({ ...rest, md5: md5Checksum }));
+        return { ok: true, data: files };
+    }
+
+    async searchFile(q) {
+        const result = await this.executeWithRetry(() => this.drive.files.list({ q, fields: 'files(id, name)' }));
+        return result.ok ? { ok: true, data: result.data.files } : result;
+    }
+
+    async getFileMeta(fileId) {
+        return this.executeWithRetry(() => this.drive.files.get({
+            fileId,
+            fields: 'id, name, md5Checksum, modifiedTime, size',
+        }));
+    }
+
+    async downloadFile(fileId, destPath, onProgress) {
+        const dest = fs.createWriteStream(destPath);
+        const getRequest = await this.drive.files.get(
+            { fileId, alt: 'media' },
+            { responseType: 'stream' }
+        );
+
+        const totalSize = getRequest.headers['content-length'] ? parseInt(getRequest.headers['content-length'], 10) : 0;
+        let downloadedSize = 0;
+
+        return new Promise((resolve) => {
+            getRequest.data
+                .on('data', (chunk) => {
+                    downloadedSize += chunk.length;
+                    if (onProgress && totalSize > 0) {
+                        const percent = Math.round((downloadedSize / totalSize) * 100);
+                        onProgress(percent);
+                    }
+                })
+                .on('end', () => resolve({ ok: true, data: { path: destPath } }))
+                .on('error', err => resolve({ ok: false, error: err }))
+                .pipe(dest);
+        });
+    }
+
+    async uploadFile(folderId, filename, filepath, mimeType, onProgress) {
+        const stats = await fsp.stat(filepath);
+        const fileSize = stats.size;
+
+        if (fileSize > RESUMABLE_THRESHOLD_BYTES) {
+            return this.resumableUpload(folderId, filename, filepath, mimeType, fileSize, onProgress);
+        }
+        return this.simpleUpload(folderId, filename, filepath, mimeType, onProgress);
+    }
+
+    async simpleUpload(folderId, filename, filepath, mimeType, onProgress) {
+        const searchResult = await this.searchFile(`name='${filename}' and '${folderId}' in parents`);
+        if (!searchResult.ok) return searchResult;
+
+        const existingFile = searchResult.data.length > 0 ? searchResult.data[0] : null;
+
+        const fileMetadata = { name: filename, mimeType };
+        const media = { mimeType, body: fs.createReadStream(filepath) };
+
+        const request = {
+            resource: fileMetadata,
+            media,
+            fields: 'id, name, md5Checksum, modifiedTime, size',
+        };
+
+        if (onProgress) onProgress(100);
+
+        if (existingFile) {
+            return this.executeWithRetry(() => this.drive.files.update({ fileId: existingFile.id, ...request }));
+        }
+        return this.executeWithRetry(() => this.drive.files.create({ ...request, resource: { ...fileMetadata, parents: [folderId] } }));
+    }
+
+    async resumableUpload(folderId, filename, filepath, mimeType, fileSize, onProgress) {
+        const searchResult = await this.searchFile(`name='${filename}' and '${folderId}' in parents`);
+        if (!searchResult.ok) return searchResult;
+
+        const existingFile = searchResult.data.length > 0 ? searchResult.data[0] : null;
+
+        return new Promise((resolve) => {
+            const fileMetadata = { name: filename, mimeType };
+            if (!existingFile) {
+                fileMetadata.parents = [folderId];
+            }
+
+            const media = { mimeType, body: fs.createReadStream(filepath) };
+
+            let uploadedBytes = 0;
+            const progressStream = new PassThrough();
+            progressStream.on('data', (chunk) => {
+                uploadedBytes += chunk.length;
+                if (onProgress) {
+                    const percent = Math.round((uploadedBytes / fileSize) * 100);
+                    onProgress(percent);
+                }
+            });
+
+            media.body.pipe(progressStream);
+
+            const req = existingFile
+                ? this.drive.files.update({ fileId: existingFile.id, resource: fileMetadata, media: { ...media, body: progressStream }, fields: 'id' })
+                : this.drive.files.create({ resource: fileMetadata, media: { ...media, body: progressStream }, fields: 'id' });
+
+            req.then(res => {
+                if (onProgress) onProgress(100);
+                resolve({ ok: true, data: res.data });
+            }).catch(err => {
+                resolve({ ok: false, error: err });
+            });
+        });
+    }
+
+    async deleteFile(fileId) {
+        return this.executeWithRetry(() => this.drive.files.delete({ fileId }));
+    }
+}
+
+module.exports = GoogleDriveService;

@@ -1,0 +1,44 @@
+{
+  "name": "goat-tracker",
+  "version": "1.0.0",
+  "description": "Desktop Goat Farm Management Application",
+  "main": "electron/main.js",
+  "homepage": "./",
+  "scripts": {
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:pack": "npm run build && electron-builder",
+    "electron:build": "npm run build && electron-builder --publish=never",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.goattracker.app",
+    "productName": "GoatTracker",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "electron": "^latest",
+    "electron-builder": "^latest",
+    "concurrently": "^latest",
+    "wait-on": "^latest"
+  }
+}

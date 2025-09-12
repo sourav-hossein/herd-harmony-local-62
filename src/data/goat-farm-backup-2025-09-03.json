@@ -1,0 +1,282 @@
+{
+  "goats": [
+    {
+      "name": "Lalburi",
+      "breed": "Other",
+      "tagNumber": "1",
+      "gender": "female",
+      "birthDate": "2011-12-13T00:00:00.000Z",
+      "color": "red",
+      "status": "archived",
+      "hornStatus": "horned",
+      "notes": "",
+      "mediaFiles": [],
+      "createdAt": "2025-08-20T13:08:08.037Z",
+      "updatedAt": "2025-08-20T13:08:08.037Z",
+      "id": "mejzn6cnl67bo9b0hjq"
+    },
+    {
+      "name": "Kalaburi",
+      "breed": "Other",
+      "tagNumber": "2",
+      "gender": "female",
+      "birthDate": "2011-11-01T00:00:00.000Z",
+      "color": "black",
+      "status": "active",
+      "hornStatus": "horned",
+      "notes": "",
+      "mediaFiles": [],
+      "createdAt": "2025-08-20T13:09:33.206Z",
+      "updatedAt": "2025-09-03T03:18:09.875Z",
+      "id": "mejzp02eelb5hbsn9sh",
+      "isFavorite": true,
+      "motherId": "mejzn6cnl67bo9b0hjq"
+    },
+    {
+      "name": "সাদা সুন্দরী",
+      "breed": "Other",
+      "tagNumber": "51",
+      "gender": "female",
+      "birthDate": "2023-01-01T00:00:00.000Z",
+      "color": "Brown, White Mix",
+      "status": "active",
+      "hornStatus": "horned",
+      "notes": "",
+      "mediaFiles": [],
+      "createdAt": "2025-08-27T08:32:23.862Z",
+      "updatedAt": "2025-08-27T08:32:23.862Z",
+      "id": "metpvjg6iy3pwr46w5b"
+    },
+    {
+      "name": "লাল খাসি",
+      "breed": "Other",
+      "tagNumber": "52",
+      "gender": "male",
+      "birthDate": "2023-11-01T00:00:00.000Z",
+      "color": "Red",
+      "status": "sold",
+      "hornStatus": "horned",
+      "notes": "",
+      "mediaFiles": [],
+      "createdAt": "2025-08-27T08:35:39.381Z",
+      "updatedAt": "2025-08-27T08:35:39.381Z",
+      "id": "metpzqb9kw2x0a1c24"
+    },
+    {
+      "name": "ট্যাবলেট",
+      "breed": "Other",
+      "tagNumber": "50",
+      "gender": "female",
+      "birthDate": "2018-01-01T00:00:00.000Z",
+      "color": "Black",
+      "status": "archived",
+      "hornStatus": "horned",
+      "notes": "",
+      "motherId": "mejzp02eelb5hbsn9sh",
+      "mediaFiles": [],
+      "createdAt": "2025-08-27T08:39:59.879Z",
+      "updatedAt": "2025-08-27T08:39:59.879Z",
+      "id": "metq5bbb33183vmx93v",
+      "isFavorite": true
+    },
+    {
+      "name": "পাগল",
+      "breed": "Black Bengal",
+      "tagNumber": "54",
+      "gender": "female",
+      "birthDate": "2021-08-27T00:00:00.000Z",
+      "color": "Black",
+      "status": "active",
+      "hornStatus": "horned",
+      "notes": "শান্তশিষ্ট লেজ বিশিষ্ট, ঠান্ডা মাথার কমবুদ্ধিসম্পন্ন ছাগল",
+      "motherId": "metq5bbb33183vmx93v",
+      "mediaFiles": [],
+      "createdAt": "2025-08-27T08:53:49.742Z",
+      "updatedAt": "2025-08-27T08:53:49.742Z",
+      "id": "metqn3n2oaybzajoos"
+    },
+    {
+      "name": "পাগলের বোন",
+      "breed": "Black Bengal",
+      "tagNumber": "55",
+      "gender": "female",
+      "birthDate": "2021-08-01T00:00:00.000Z",
+      "color": "Black",
+      "status": "active",
+      "hornStatus": "horned",
+      "notes": "১। বোনের চেয়ে তুলনামুলক ধী সম্পন্ন \n২। অন্যান্য ছাগলের মতো একটু ত্যাড়া কিছিমের",
+      "motherId": "metq5bbb33183vmx93v",
+      "mediaFiles": [],
+      "createdAt": "2025-08-27T08:55:39.162Z",
+      "updatedAt": "2025-08-27T08:58:05.200Z",
+      "id": "metqpg2i2ur2qblsr6q"
+    },
+    {
+      "name": "বড় কুলা ",
+      "breed": "Deshi",
+      "tagNumber": "56",
+      "gender": "male",
+      "birthDate": "2019-08-01T00:00:00.000Z",
+      "color": "",
+      "status": "sold",
+      "hornStatus": "horned",
+      "notes": "",
+      "motherId": "metq5bbb33183vmx93v",
+      "mediaFiles": [],
+      "createdAt": "2025-08-27T09:02:27.650Z",
+      "updatedAt": "2025-08-27T09:02:27.650Z",
+      "id": "metqy79dv77cwcxhwd"
+    }
+  ],
+  "weightRecords": [
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "weight": 8.6,
+      "method": "estimated",
+      "chestGirth": 25,
+      "bodyLength": 20,
+      "notes": "",
+      "id": "metlxdoctjh0ylnu1k"
+    },
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "weight": 22,
+      "method": "estimated",
+      "chestGirth": 26,
+      "bodyLength": 21,
+      "notes": "",
+      "id": "metm8djm7lgs02o4ksb"
+    },
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "weight": 23,
+      "method": "actual",
+      "notes": "",
+      "id": "metm9hcjfcbzqpa00jh"
+    },
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "weight": 26,
+      "method": "actual",
+      "notes": "",
+      "id": "metmahxiwh6mdljo8a"
+    },
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "weight": 24,
+      "method": "estimated",
+      "chestGirth": 27,
+      "bodyLength": 22,
+      "notes": "",
+      "id": "metmcude391y0uvnbon"
+    },
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "weight": 31,
+      "method": "estimated",
+      "chestGirth": 30,
+      "bodyLength": 23,
+      "notes": "",
+      "id": "metmhvl8o2iyhwqfrsk"
+    },
+    {
+      "goatId": "metqpg2i2ur2qblsr6q",
+      "date": "2025-09-02T00:00:00.000Z",
+      "weight": 23,
+      "method": "actual",
+      "notes": "",
+      "id": "mf1xmohvwk56mkaymt"
+    }
+   
+  ],
+  "healthRecords": [
+    {
+      "goatId": "mejzp02eelb5hbsn9sh",
+      "date": "2025-08-27T00:00:00.000Z",
+      "type": "vaccination",
+      "description": "tt",
+      "medicine": "",
+      "veterinarian": "",
+      "status": "completed",
+      "notes": "",
+      "id": "metp6ot1akvbwkzqheg"
+    }
+  ],
+  "breedingRecords": [],
+  "financeRecords": [
+    {
+      "type": "expense",
+      "category": "Medicine",
+      "amount": 44,
+      "date": "2025-09-09T18:00:00.000Z",
+      "description": "",
+      "id": "mf1zo1ocltxmywqkkpi",
+      "createdAt": "2025-09-02T03:28:39.804Z",
+      "updatedAt": "2025-09-03T03:02:01.861Z"
+    },
+    {
+      "type": "income",
+      "category": "Milk Sales",
+      "amount": 100,
+      "date": "2025-09-02T03:34:29.318Z",
+      "description": "",
+      "goatId": "metpvjg6iy3pwr46w5b",
+      "id": "mf1zw1ace2jrhiyawn",
+      "createdAt": "2025-09-02T03:34:52.548Z",
+      "updatedAt": "2025-09-02T03:34:52.548Z"
+    },
+    {
+      "type": "income",
+      "category": "Milk Sales",
+      "amount": 12,
+      "date": "2025-09-03T18:00:00.000Z",
+      "description": "",
+      "id": "mf3e6vzroip5jke0vnp",
+      "createdAt": "2025-09-03T03:02:59.703Z",
+      "updatedAt": "2025-09-03T03:02:59.703Z"
+    },
+    {
+      "type": "expense",
+      "category": "Feed",
+      "amount": 10.799999999999999,
+      "date": "2025-09-03T00:00:00.000Z",
+      "description": "Feed log: undefined kg",
+      "feedLogId": "mf4bpe7vujbdolxteu",
+      "id": "mf4bpe7wclnfog17r7c",
+      "createdAt": "2025-09-03T18:41:10.460Z",
+      "updatedAt": "2025-09-03T18:52:38.956Z"
+    },
+    {
+      "id": "mf4c9k0m8pjsh0cdlp5",
+      "type": "expense",
+      "amount": 0,
+      "date": "2025-09-03T18:56:51.094Z",
+      "description": "Feed added: grass",
+      "createdAt": "2025-09-03T18:56:51.094Z",
+      "updatedAt": "2025-09-03T18:56:51.094Z"
+    }
+  ],
+  "feeds": [],
+  "feedPlans": [],
+  "feedLogs": [
+    {
+      "goatId": "metqpg2i2ur2qblsr6q",
+      "feedId": "1756924784031",
+      "date": "2025-09-03T00:00:00.000Z",
+      "amountUsed": 1.2,
+      "unit": "kg",
+      "notes": "",
+      "cost": 10.799999999999999,
+      "id": "mf4bpe7vujbdolxteu",
+      "createdAt": "2025-09-03T18:41:10.459Z"
+    }
+  ],
+  "exportDate": "2025-09-03T18:57:22.304Z",
+  "version": "1.0"
+}
