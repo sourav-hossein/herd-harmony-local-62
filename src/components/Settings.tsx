@@ -10,6 +10,7 @@ import { DataManagement } from '@/components/DataManagement';
 import { LocalBackupManager } from '@/components/LocalBackupManager';
 import  {CloudBackupManager}  from '@/components/CloudBackupManager';
 import { AccentColorPicker } from '@/components/AccentColorPicker';
+import AISettings from '@/components/ai/AISettings';
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -24,8 +25,9 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="appearance" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="ai">AI Assistant</TabsTrigger>
           <TabsTrigger value="data">Data Management</TabsTrigger>
           <TabsTrigger value="backup">Local Backup</TabsTrigger>
           <TabsTrigger value="cloud-sync">Cloud Sync</TabsTrigger>
@@ -123,6 +125,10 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <AISettings />
         </TabsContent>
 
         <TabsContent value="data">

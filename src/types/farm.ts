@@ -20,6 +20,11 @@ export interface FarmMeta {
     autoBackup?: boolean;
     backupInterval?: number; // minutes
     maxBackups?: number;
+    ai?: {
+      geminiApiKey?: string;
+      enabled?: boolean;
+      lastValidated?: string;
+    };
   };
 }
 
