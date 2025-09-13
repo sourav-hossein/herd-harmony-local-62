@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Upload, X, Users, Play, FileImage, Video } from "lucide-react";
 import { BreedingRecord } from '@/types/breeding';
 import { Goat } from '@/types/goat';
-import {MediaFile} from '@/types/media'
+import { MediaFile } from '@/types/goat';
 import { useGoatContext } from '@/context/GoatContext';
 import { toast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';

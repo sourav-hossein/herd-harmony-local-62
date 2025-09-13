@@ -52,9 +52,9 @@ export interface Goat {
   mediaFiles?: MediaFile[];
   // Genetic traits for pedigree
   genetics?: {
-    coatColor: string;
-    hornStatus: 'horned' | 'polled' | 'disbudded';
-    fertilityScore: number;
+    coatColor?: string;
+    hornStatus?: 'horned' | 'polled' | 'disbudded';
+    fertilityScore?: number;
     milkYieldGenetics?: number;
     hornGenotype?: 'PP' | 'Ph' | 'hh';
   };
@@ -86,6 +86,7 @@ export interface HealthRecord {
   veterinarian?: string;
   medications?: string;
   medicine?: string; // Alias for medications
+  treatment?: string; // AI field for treatment details
   notes?: string;
   status: 'completed' | 'scheduled' | 'overdue';
   createdAt: Date;

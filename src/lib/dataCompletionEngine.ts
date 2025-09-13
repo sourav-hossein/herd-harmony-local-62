@@ -1,6 +1,6 @@
 import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@/types/goat';
 import { FinanceRecord } from '@/types/finance';
-import { MediaFile } from '@/types/media';
+import { MediaFile } from '@/types/goat';
 
 export interface DataIssue {
   id: string;

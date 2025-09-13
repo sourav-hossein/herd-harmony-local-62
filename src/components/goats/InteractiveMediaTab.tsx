@@ -26,7 +26,7 @@ import {
   Star
 } from 'lucide-react';
 import { Goat } from '@/types/goat';
-import { MediaFile } from '@/types/media';
+import { MediaFile } from '@/types/goat';
 import { useToast } from '@/hooks/use-toast';
 import { useGoatContext } from '@/context/GoatContext';
 import { v4 as uuidv4 } from 'uuid';

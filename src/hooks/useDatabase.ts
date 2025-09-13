@@ -4,7 +4,7 @@
 import { FarmMeta } from '@/types/farm';
 import { FinanceRecord } from '@/types/finance';
 import { Goat } from '@/types/goat';
-import { MediaFile } from '@/types/media';
+import { MediaFile } from '@/types/goat';
 import { useState, useEffect } from 'react';
 interface Progress {
   status: string;

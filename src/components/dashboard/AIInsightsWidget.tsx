@@ -16,7 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { aiService, AIInsight } from '@/services/aiService';
-import { useGoats } from '@/context/GoatContext';
+import { useGoatContext } from '@/context/GoatContext';
 import { useFarm } from '@/context/FarmContext';
 import { useToast } from '@/hooks/use-toast';
 import AIInsightCard from '@/components/ai/AIInsightCard';
@@ -32,8 +32,8 @@ export default function AIInsightsWidget({ onOpenSettings, className }: AIInsigh
   const [isEnabled, setIsEnabled] = useState(false);
   const [lastGenerated, setLastGenerated] = useState<Date | null>(null);
   
-  const { goats, healthRecords, breedingRecords } = useGoats();
-  const { selectedFarm } = useFarm();
+  const { goats, healthRecords, breedingRecords } = useGoatContext();
+  const { activeFarmId } = useFarm();
   const { toast } = useToast();
 
   useEffect(() => {

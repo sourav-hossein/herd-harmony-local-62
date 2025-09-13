@@ -16,7 +16,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { aiService, ChatMessage } from '@/services/aiService';
-import { useGoats } from '@/context/GoatContext';
+import { useGoatContext } from '@/context/GoatContext';
 import { useFarm } from '@/context/FarmContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,8 +32,8 @@ export default function FarmAdvisor({ className }: FarmAdvisorProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const { goats, weightRecords, healthRecords, breedingRecords } = useGoats();
-  const { selectedFarm, farms } = useFarm();
+  const { goats, weightRecords, healthRecords, breedingRecords } = useGoatContext();
+  const { activeFarmId, farms } = useFarm();
   const { toast } = useToast();
 
   useEffect(() => {

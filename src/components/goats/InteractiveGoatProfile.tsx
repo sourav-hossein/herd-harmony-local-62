@@ -29,7 +29,7 @@ import { InteractiveMediaTab } from './InteractiveMediaTab';
 import PedigreeAnalyzer from '../pedigree/PedigreeAnalyzer';
 import FullPedigreeTree from '../pedigree/FullPedigreeTree'; // Import the new component
 import { useGoatContext } from '@/context/GoatContext';
-import { MediaFile } from '@/types/media';
+import { MediaFile } from '@/types/goat';
 
 interface InteractiveGoatProfileProps {
   goat: Goat | null;
