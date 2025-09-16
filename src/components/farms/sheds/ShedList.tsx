@@ -9,71 +9,56 @@ import {
   Users, 
   Edit, 
   Trash2,
-  MapPin 
+  MapPin,
+  AlertCircle
 } from 'lucide-react';
 import { Shed } from '@/types/farm';
-import { useFarm } from '@/context/FarmContext';
 import ShedForm from './ShedForm';
 import PartitionManager from './PartitionManager';
+import { useGoatContext } from '@/context/GoatContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
+import { useFacilities } from '@/context/FacilitiesContext';
 
 export default function ShedList() {
-  const { farmData, updateFarmData } = useFarm();
+  const { sheds, loading, error, addShed, updateShed, deleteShed } = useFacilities();
+  const { goats, updateGoat } = useGoatContext();
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedShed, setSelectedShed] = useState<Shed | null>(null);
   const [showPartitions, setShowPartitions] = useState<string | null>(null);
 
-  const sheds = farmData?.sheds || [];
-  const goats = farmData?.goats || [];
-
-  const handleCreateShed = async (shedData: Omit<Shed, 'id'>) => {
-    const newShed: Shed = {
-      ...shedData,
-      id: `shed_${Date.now()}`,
-    };
-
-    await updateFarmData({
-      sheds: [...sheds, newShed],
-    });
-
-    setIsCreateDialogOpen(false);
-  };
-
-  const handleEditShed = async (shedData: Omit<Shed, 'id'>) => {
-    if (!selectedShed) return;
-
-    const updatedSheds = sheds.map(shed =>
-      shed.id === selectedShed.id
-        ? { ...shed, ...shedData }
-        : shed
-    );
-
-    await updateFarmData({
-      sheds: updatedSheds,
-    });
-
-    setIsEditDialogOpen(false);
-    setSelectedShed(null);
-  };
-
-  const handleDeleteShed = async (shedId: string) => {
-    if (!confirm('Are you sure you want to delete this shed? All goats will be moved to unassigned.')) {
-      return;
+  const handleCreateShed = async (shedData: Omit<Shed, 'id' | 'createdAt'>) => {
+    try {
+      await addShed(shedData);
+      setIsCreateDialogOpen(false);
+    } catch (err) {
+      console.error('Failed to create shed:', err);
     }
+  };
 
-    // Remove shed assignments from goats
-    const updatedGoats = goats.map(goat =>
-      goat.shedId === shedId
-        ? { ...goat, shedId: undefined, partitionId: undefined }
-        : goat
-    );
+  const handleEditShed = async (shedData: Omit<Shed, 'id' | 'createdAt'>) => {
+    if (!selectedShed) return;
+    try {
+      await updateShed(selectedShed.id, shedData);
+      setIsEditDialogOpen(false);
+      setSelectedShed(null);
+    } catch (err) {
+      console.error('Failed to update shed:', err);
+    }
+  };
 
-    const updatedSheds = sheds.filter(shed => shed.id !== shedId);
-
-    await updateFarmData({
-      sheds: updatedSheds,
-      goats: updatedGoats,
-    });
+  const handleDeleteShed = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this shed? This may affect goats assigned to it.')) return;
+    try {
+      // unassign goats from this shed
+      const goatsToUpdate = goats.filter(goat => goat.shedId === id);
+      await Promise.all(goatsToUpdate.map(goat => updateGoat(goat.id, { shedId: undefined, partitionId: undefined })));
+      await deleteShed(id);
+    } catch (err) {
+      console.error('Failed to delete shed:', err);
+    }
   };
 
   const getGoatsInShed = (shedId: string) => {
@@ -84,9 +69,25 @@ export default function ShedList() {
     return goats.filter(goat => goat.shedId === shedId && goat.partitionId === partitionId);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Switch />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Sheds & Housing</h2>
@@ -100,7 +101,6 @@ export default function ShedList() {
         </Button>
       </div>
 
-      {/* Sheds Grid */}
       {sheds.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
@@ -160,7 +160,6 @@ export default function ShedList() {
                     </div>
                   </div>
                 </CardHeader>
-
                 <CardContent className="space-y-3">
                   {/* Occupancy */}
                   <div className="flex items-center justify-between">

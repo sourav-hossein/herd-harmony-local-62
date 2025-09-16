@@ -1,19 +1,31 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/context/ThemeContext';
 import { Monitor, Moon, Sun, Palette, Database, Shield, Cloud } from 'lucide-react';
-import { DataManagement } from '@/components/DataManagement';
-import { LocalBackupManager } from '@/components/LocalBackupManager';
-import  {CloudBackupManager}  from '@/components/CloudBackupManager';
+import { DataManagement } from '@/components/settings/DataManagement';
+import { LocalBackupManager } from '@/components/settings/LocalBackupManager';
+import  {CloudBackupManager}  from '@/components/settings/CloudBackupManager';
 import { AccentColorPicker } from '@/components/AccentColorPicker';
 import AISettings from '@/components/ai/AISettings';
+import FarmSettingsTab from './FarmSettingsTab';
 
-export default function Settings() {
+interface SettingsProps {
+  initialActiveTab?: string;
+}
+
+export default function Settings({ initialActiveTab }: SettingsProps) {
   const { theme, setTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState(initialActiveTab || 'appearance');
+
+  useEffect(() => {
+    if (initialActiveTab) {
+      setActiveTab(initialActiveTab);
+    }
+  }, [initialActiveTab]);
 
   return (
     <div className="space-y-6">
@@ -24,14 +36,19 @@ export default function Settings() {
         </p>
       </div>
 
-      <Tabs defaultValue="appearance" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="farm-settings">Farm Settings</TabsTrigger>
           <TabsTrigger value="ai">AI Assistant</TabsTrigger>
           <TabsTrigger value="data">Data Management</TabsTrigger>
           <TabsTrigger value="backup">Local Backup</TabsTrigger>
           <TabsTrigger value="cloud-sync">Cloud Sync</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="farm-settings">
+          <FarmSettingsTab />
+        </TabsContent>
 
         <TabsContent value="appearance" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">

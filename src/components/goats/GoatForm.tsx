@@ -9,13 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGoatContext } from '@/context/GoatContext';
 import { Goat } from '@/types/goat';
 import { MediaFile } from '@/types/goat';
-import MediaGallery from './media/MediaGallery';
+// import MediaGallery from './media/MediaGallery';
 import EnhancedParentSelector from './EnhancedParentSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BreedingAdvisor } from '@/lib/breedingAdvisor';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Info, Camera } from 'lucide-react';
-import GeneticsSection from './genetics/GeneticsSection';
+import GeneticsSection from '@/components/genetics/GeneticsSection';
 import { GeneticPredictor } from '@/lib/predictGenetics';
 
 interface GoatFormProps {
@@ -73,7 +73,7 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
           hornStatus: goat.hornStatus || 'horned',
           fertilityScore: 5,
           milkYieldGenetics: 100,
-          hornGenotype: 'hh' as const
+          hornGenotype: 'hh' 
         }
       });
     } else {

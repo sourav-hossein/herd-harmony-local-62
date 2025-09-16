@@ -1,23 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { FarmMeta } from '@/types/farm';
-import { Feed, Goat, HealthRecord } from '@/types/goat';
-import { Shed, Pasture } from '@/types/farm';
-import { FinanceRecord } from '@/types/finance';
 
+export interface MapData {
+  center: [number, number];
+  zoom: number;
+  bounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+  boundary: number[][];
+  screenshot?: string;
+  tileUrls?: string[];
+  savedAt?: string;
+  pastures?: { [pastureId: string]: any };
+}
 
-
-interface FarmData {
-  goats: Goat[];
-  sheds: Shed[];
-  pastures: Pasture[];
-  finance: FinanceRecord[];
-  health: HealthRecord[];
-  feeds: Feed[];
+export interface FarmData {
   metadata: FarmMeta | null;
-  // Grazing management data
-  pastureHealthLogs?: any[];
-  rotationPlans?: any[];
-  grazingLogs?: any[];
+  mapData?: MapData | null;
 }
 
 interface FarmContextType {
@@ -25,10 +28,21 @@ interface FarmContextType {
   farmData: FarmData | null;
   farms: FarmMeta[];
   setActiveFarm: (farmId: string) => Promise<void>;
-  updateFarmData: (updates: Partial<FarmData>) => Promise<void>; // This might need rethinking
-  createFarm: (farm: Omit<FarmMeta, 'id' | 'createdAt'>) => Promise<FarmMeta>;
+  updateFarmData: (updates: Partial<FarmData>) => Promise<void>;
+  createFarm: (farm: Omit<FarmMeta, 'id' | 'createdAt'> & { mapData?: MapData }) => Promise<FarmMeta>;
   deleteFarm: (farmId: string) => Promise<void>;
   refreshFarms: () => Promise<void>;
+  
+  // Map-related functions
+  getFarmMapData: (farmId?: string) => Promise<MapData | null>;
+  saveFarmMapData: (mapData: MapData, farmId?: string) => Promise<boolean>;
+  savePastureMapData: (pastureId: string, mapData: any, farmId?: string) => Promise<boolean>;
+  getPastureMapData: (pastureId: string, farmId?: string) => Promise<any>;
+  
+  // Offline capabilities
+  isMapAvailable: boolean;
+  downloadMapTiles: (bounds: any, farmId?: string) => Promise<boolean>;
+  
   isLoading: boolean;
 }
 
@@ -47,15 +61,17 @@ interface FarmProviderProps {
 }
 
 export function FarmProvider({ children }: FarmProviderProps) {
-  const [activeFarmId, setActiveFarmId] = useState<string | null>(localStorage.getItem('activeFarmId')|| null);
+  const [activeFarmId, setActiveFarmId] = useState<string | null>(null);
   const [farmData, setFarmData] = useState<FarmData | null>(null);
   const [farms, setFarms] = useState<FarmMeta[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMapAvailable, setIsMapAvailable] = useState(false);
 
   const refreshFarms = async () => {
     try {
       setIsLoading(true);
-      const farmList = await window.electronAPI.listFarms();
+      const farmList = await window.electronAPI!.listFarms();
+      console.log("Farm List:", farmList);
       setFarms(farmList);
     } catch (error) {
       console.error('Failed to load farms:', error);
@@ -64,52 +80,50 @@ export function FarmProvider({ children }: FarmProviderProps) {
     }
   };
 
-  const loadAllFarmData = async (farmId: string) => {
+  const loadAllFarmData = async (farmId: string, farmList: FarmMeta[]) => {
     try {
-      // This is a simplified example. You'd fetch all your data here.
-      // For now, we just fetch goats as a placeholder for loading data.
-      const goats = await window.electronAPI.getGoats();
-      const farmMeta = farms.find(f => f.id === farmId) || null;
+      const farmMeta = farmList.find(f => f.id === farmId) || null;
+      let mapData: MapData | null = null;
       
-      // In a real scenario, you would fetch sheds, pastures, etc.
-      setFarmData({
-        goats,
-        sheds: [], // await window.electronAPI.getSheds(),
-        pastures: [], // await window.electronAPI.getPastures(),
-        finance: [],
-        health: [],
-        feeds: [],
-        metadata: farmMeta,
-      });
+      // Load map data if available
+      try {
+        mapData = await window.electronAPI!.getFarmMapData(farmId);
+        setIsMapAvailable(!!mapData);
+      } catch (error) {
+        console.warn('Map data not available for farm:', farmId);
+        setIsMapAvailable(false);
+      }
 
+      setFarmData({ 
+        metadata: farmMeta,
+        mapData 
+      });
     } catch (error) {
-        console.error('Failed to load all farm data:', error);
-        // Handle error appropriately
+      console.error('Failed to load all farm data:', error);
     }
   };
 
-  const setActiveFarm = async (farmId: string) => {
+  const setActiveFarm = async (farmId: string, farmList?: FarmMeta[]) => {
+    const currentFarms = farmList || farms;
     try {
       setIsLoading(true);
-      await window.electronAPI.setActiveFarm(farmId);
+      await window.electronAPI!.setActiveFarmId(farmId);
+      await window.electronAPI!.initializeFarmServices(farmId);
       setActiveFarmId(farmId);
       localStorage.setItem('activeFarmId', farmId);
-      await loadAllFarmData(farmId);
+      await loadAllFarmData(farmId, currentFarms);
       
-      // Update last opened timestamp locally for immediate UI feedback
-      const updatedFarms = farms.map(farm => 
+      const updatedFarms = currentFarms.map(farm => 
         farm.id === farmId 
           ? { ...farm, lastOpenedAt: new Date().toISOString() }
           : farm
       );
       setFarms(updatedFarms);
       
-      // Persist the last opened time
       const farmMeta = updatedFarms.find(f => f.id === farmId);
       if (farmMeta) {
-        await window.electronAPI.updateFarm(farmId, { lastOpenedAt: farmMeta.lastOpenedAt });
+        await window.electronAPI!.updateFarm(farmId, { lastOpenedAt: farmMeta.lastOpenedAt });
       }
-
     } catch (error) {
       console.error('Failed to set active farm:', error);
       throw error;
@@ -119,17 +133,33 @@ export function FarmProvider({ children }: FarmProviderProps) {
   };
 
   const updateFarmData = async (updates: Partial<FarmData>) => {
-    // This function needs to be adapted. Instead of saving the whole blob,
-    // you should now call specific update functions for each data type.
-    // For example: window.electronAPI.updateGoat(goat.id, changes)
-    console.warn('updateFarmData is not fully implemented for backend storage yet.');
-    if (!farmData) return;
-    setFarmData({ ...farmData, ...updates });
+    if (!farmData || !activeFarmId) return;
+    
+    // Update local state immediately
+    const updatedData = { ...farmData, ...updates };
+    setFarmData(updatedData);
+    
+    // Save map data if it was updated
+    if (updates.mapData) {
+      await saveFarmMapData(updates.mapData, activeFarmId);
+    }
+    
+    // Update farm metadata if changed
+    if (updates.metadata) {
+      await window.electronAPI!.updateFarm(activeFarmId, updates.metadata);
+    }
   };
 
-  const createFarm = async (farmInput: Omit<FarmMeta, 'id' | 'createdAt'>): Promise<FarmMeta> => {
+  const createFarm = async (farmInput: Omit<FarmMeta, 'id' | 'createdAt'> & { mapData?: MapData }): Promise<FarmMeta> => {
     try {
-      const newFarm = await window.electronAPI.createFarm(farmInput);
+      const { mapData, ...farmMeta } = farmInput;
+      const newFarm = await window.electronAPI!.createFarm(farmMeta);
+      
+      // Save map data if provided
+      if (mapData) {
+        await window.electronAPI!.saveFarmMapData(newFarm.id, mapData);
+      }
+      
       await refreshFarms();
       return newFarm;
     } catch (error) {
@@ -140,14 +170,13 @@ export function FarmProvider({ children }: FarmProviderProps) {
 
   const deleteFarm = async (farmId: string) => {
     try {
-      await window.electronAPI.deleteFarm(farmId);
-      
+      await window.electronAPI!.deleteFarm(farmId);
       if (activeFarmId === farmId) {
         setActiveFarmId(null);
         localStorage.removeItem('activeFarmId');
         setFarmData(null);
+        setIsMapAvailable(false);
       }
-      
       await refreshFarms();
     } catch (error) {
       console.error('Failed to delete farm:', error);
@@ -155,9 +184,112 @@ export function FarmProvider({ children }: FarmProviderProps) {
     }
   };
 
+  // Map-related functions
+  const getFarmMapData = async (farmId?: string): Promise<MapData | null> => {
+    try {
+      const targetFarmId = farmId || activeFarmId;
+      if (!targetFarmId) return null;
+      
+      return await window.electronAPI!.getFarmMapData(targetFarmId);
+    } catch (error) {
+      console.error('Failed to get farm map data:', error);
+      return null;
+    }
+  };
+
+  const saveFarmMapData = async (mapData: MapData, farmId?: string): Promise<boolean> => {
+    try {
+      const targetFarmId = farmId || activeFarmId;
+      if (!targetFarmId) return false;
+      
+      const success = await window.electronAPI!.saveFarmMapData(targetFarmId, mapData);
+      if (success && targetFarmId === activeFarmId) {
+        setFarmData(prev => prev ? { ...prev, mapData } : null);
+        setIsMapAvailable(true);
+      }
+      return success;
+    } catch (error) {
+      console.error('Failed to save farm map data:', error);
+      return false;
+    }
+  };
+
+  const savePastureMapData = async (pastureId: string, mapData: any, farmId?: string): Promise<boolean> => {
+    try {
+      const targetFarmId = farmId || activeFarmId;
+      if (!targetFarmId) return false;
+      
+      return await window.electronAPI!.savePastureMapData(targetFarmId, pastureId, mapData);
+    } catch (error) {
+      console.error('Failed to save pasture map data:', error);
+      return false;
+    }
+  };
+
+  const getPastureMapData = async (pastureId: string, farmId?: string): Promise<any> => {
+    try {
+      const targetFarmId = farmId || activeFarmId;
+      if (!targetFarmId) return null;
+      
+      return await window.electronAPI!.getPastureMapData(targetFarmId, pastureId);
+    } catch (error) {
+      console.error('Failed to get pasture map data:', error);
+      return null;
+    }
+  };
+
+  const downloadMapTiles = async (bounds: any, farmId?: string): Promise<boolean> => {
+    try {
+      const targetFarmId = farmId || activeFarmId;
+      if (!targetFarmId) return false;
+      
+      // This would implement actual tile downloading logic
+      console.log('Downloading map tiles for bounds:', bounds);
+      
+      // For now, just return true as a placeholder
+      return true;
+    } catch (error) {
+      console.error('Failed to download map tiles:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
-    refreshFarms();
+    const initialize = async () => {
+      setIsLoading(true);
+      try {
+        const farmList = await window.electronAPI!.listFarms();
+        setFarms(farmList);
+
+        if (farmList.length > 0) {
+          const lastActiveId = localStorage.getItem('activeFarmId');
+          let farmToActivate = farmList.find(f => f.id === lastActiveId);
+
+          if (!farmToActivate) {
+            const sortedFarms = [...farmList].sort((a, b) =>
+              new Date(b.lastOpenedAt || 0).getTime() - new Date(a.lastOpenedAt || 0).getTime()
+            );
+            farmToActivate = sortedFarms[0];
+          }
+
+          if (farmToActivate) {
+            await setActiveFarm(farmToActivate.id);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load farms:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initialize();
   }, []);
+
+  // Update map availability when farm data changes
+  useEffect(() => {
+    setIsMapAvailable(!!(farmData?.mapData));
+  }, [farmData?.mapData]);
 
   return (
     <FarmContext.Provider
@@ -170,6 +302,17 @@ export function FarmProvider({ children }: FarmProviderProps) {
         createFarm,
         deleteFarm,
         refreshFarms,
+        
+        // Map functions
+        getFarmMapData,
+        saveFarmMapData,
+        savePastureMapData,
+        getPastureMapData,
+        
+        // Offline capabilities
+        isMapAvailable,
+        downloadMapTiles,
+        
         isLoading,
       }}
     >

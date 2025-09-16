@@ -4,10 +4,27 @@ const { app } = require('electron');
 const SyncStateService = require('./SyncStateService.cjs');
 
 class DatabaseService {
-  constructor(farmPath) {
-    this.dbPath = farmPath;
+  constructor(farmData, basePath) {
+    this.farmData = farmData;
+    this.basePath = basePath;
+    this.dbPath = this.generateDbPath();
     this.ensureDatabaseDir();
     this.initDatabase();
+  }
+
+  sanitizeDirectoryName(name) {
+    return name
+      .replace(/[<>:"\/\\|?*\x00-\x1F]/g, '-') // Replace invalid characters
+      .replace(/\s+/g, '-')                     // Replace spaces with hyphens
+      .replace(/-+/g, '-')                      // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, '')                    // Remove leading/trailing hyphens
+      .slice(0, 64);                            // Limit length to avoid too long paths
+  }
+
+  generateDbPath() {
+    const sanitizedName = this.sanitizeDirectoryName(this.farmData.name || 'Unknown-Farm');
+    const dirName = `${sanitizedName}_${this.farmData.id}`;
+    return path.join(String(this.basePath), dirName);
   }
 
   ensureDatabaseDir() {
@@ -17,8 +34,30 @@ class DatabaseService {
   }
 
   initDatabase() {
-    const tables = ['goats', 'weightRecords', 'healthRecords', 'breedingRecords', 'financeRecords', 'feeds', 'feedPlans', 'feedLogs', 'media'];
-    tables.forEach(table => {
+    const coreTables = [
+      'goats', 
+      'weightRecords', 
+      'healthRecords', 
+      'breedingRecords', 
+      'financeRecords', 
+      'feeds', 
+      'feedPlans', 
+      'feedLogs', 
+      'media'
+    ];
+
+    const facilityTables = [
+      'sheds',           // Basic shed information
+      'partitions',      // Shed partitions (separate for efficient querying)
+      'pastures',        // Pasture basic info
+      'pastureHealth',   // Pasture health tracking logs
+      'grazingLogs',     // Detailed grazing history
+      'rotationPlans',   // Pasture rotation schedules
+      'occupancyLogs'    // Historical occupancy tracking for sheds/partitions
+    ];
+
+    // Create core data tables
+    [...coreTables, ...facilityTables].forEach(table => {
       const tablePath = path.join(this.dbPath, `${table}.json`);
       if (!fs.existsSync(tablePath)) {
         fs.writeFileSync(tablePath, JSON.stringify([], null, 2));
@@ -391,20 +430,266 @@ class DatabaseService {
     }
   }
 
+  // Shed Management Methods
+  addShed(shed) {
+    const sheds = this.readTable('sheds');
+    const newShed = {
+      ...shed,
+      id: this.generateId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    sheds.push(newShed);
+    this.writeTable('sheds', sheds);
+    return newShed;
+  }
+
+  updateShed(id, updates) {
+    const sheds = this.readTable('sheds');
+    const index = sheds.findIndex(s => s.id === id);
+    if (index !== -1) {
+      sheds[index] = {
+        ...sheds[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      this.writeTable('sheds', sheds);
+      return sheds[index];
+    }
+    return null;
+  }
+
+  deleteShed(id) {
+    // Delete shed and its associated partitions
+    const sheds = this.readTable('sheds');
+    const filteredSheds = sheds.filter(s => s.id !== id);
+    this.writeTable('sheds', filteredSheds);
+
+    // Clean up related partitions
+    const partitions = this.readTable('partitions');
+    const filteredPartitions = partitions.filter(p => p.shedId !== id);
+    this.writeTable('partitions', filteredPartitions);
+
+    // Clean up occupancy logs
+    const occupancyLogs = this.readTable('occupancyLogs');
+    const filteredLogs = occupancyLogs.filter(log => log.shedId !== id);
+    this.writeTable('occupancyLogs', filteredLogs);
+
+    return true;
+  }
+
+  // Partition Management Methods
+  addPartition(partition) {
+    const partitions = this.readTable('partitions');
+    const newPartition = {
+      ...partition,
+      id: this.generateId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    partitions.push(newPartition);
+    this.writeTable('partitions', partitions);
+    return newPartition;
+  }
+
+  getPartitionsByShed(shedId) {
+    const partitions = this.readTable('partitions');
+    return partitions.filter(p => p.shedId === shedId);
+  }
+
+  updatePartition(id, updates) {
+    const partitions = this.readTable('partitions');
+    const index = partitions.findIndex(p => p.id === id);
+    if (index !== -1) {
+      partitions[index] = {
+        ...partitions[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      this.writeTable('partitions', partitions);
+      return partitions[index];
+    }
+    return null;
+  }
+
+  // Pasture Management Methods
+  addPasture(pasture) {
+    const pastures = this.readTable('pastures');
+    const newPasture = {
+      ...pasture,
+      id: this.generateId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    pastures.push(newPasture);
+    this.writeTable('pastures', pastures);
+    return newPasture;
+  }
+
+  updatePasture(id, updates) {
+    const pastures = this.readTable('pastures');
+    const index = pastures.findIndex(p => p.id === id);
+    if (index !== -1) {
+      pastures[index] = {
+        ...pastures[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      this.writeTable('pastures', pastures);
+      return pastures[index];
+    }
+    return null;
+  }
+
+  deletePasture(id) {
+    // Delete pasture and its associated records
+    const pastures = this.readTable('pastures');
+    const filteredPastures = pastures.filter(p => p.id !== id);
+    this.writeTable('pastures', filteredPastures);
+
+    // Clean up related records
+    ['pastureHealth', 'grazingLogs', 'rotationPlans'].forEach(table => {
+      const records = this.readTable(table);
+      const filtered = records.filter(r => r.pastureId !== id);
+      this.writeTable(table, filtered);
+    });
+
+    return true;
+  }
+
+  // Grazing and Health Tracking Methods
+  addGrazingLog(log) {
+    const logs = this.readTable('grazingLogs');
+    const newLog = {
+      ...log,
+      id: this.generateId(),
+      timestamp: new Date().toISOString()
+    };
+    logs.push(newLog);
+    this.writeTable('grazingLogs', logs);
+    return newLog;
+  }
+
+  addPastureHealthLog(log) {
+    const logs = this.readTable('pastureHealth');
+    const newLog = {
+      ...log,
+      id: this.generateId(),
+      timestamp: new Date().toISOString()
+    };
+    logs.push(newLog);
+    this.writeTable('pastureHealth', logs);
+    return newLog;
+  }
+
+  addRotationPlan(plan) {
+    const plans = this.readTable('rotationPlans');
+    const newPlan = {
+      ...plan,
+      id: this.generateId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    plans.push(newPlan);
+    this.writeTable('rotationPlans', plans);
+    return newPlan;
+  }
+
+  // Occupancy Tracking
+  logOccupancy(log) {
+    const logs = this.readTable('occupancyLogs');
+    const newLog = {
+      ...log,
+      id: this.generateId(),
+      timestamp: new Date().toISOString()
+    };
+    logs.push(newLog);
+    this.writeTable('occupancyLogs', logs);
+    return newLog;
+  }
+
+  getOccupancyHistory(shedId, partitionId, startDate, endDate) {
+    const logs = this.readTable('occupancyLogs');
+    return logs.filter(log => {
+      const timestamp = new Date(log.timestamp);
+      return (
+        (!shedId || log.shedId === shedId) &&
+        (!partitionId || log.partitionId === partitionId) &&
+        (!startDate || timestamp >= new Date(startDate)) &&
+        (!endDate || timestamp <= new Date(endDate))
+      );
+    });
+  }
+
   clearAll() {
     try {
-      this.writeTable('goats', []);
-      this.writeTable('weightRecords', []);
-      this.writeTable('healthRecords', []);
-      this.writeTable('breedingRecords', []);
-      this.writeTable('financeRecords', []);
-      this.writeTable('feeds', []);
-      this.writeTable('feedPlans', []);
-      this.writeTable('feedLogs', []);
-      this.writeTable('media', []);
+      const allTables = [
+        'goats', 'weightRecords', 'healthRecords', 'breedingRecords',
+        'financeRecords', 'feeds', 'feedPlans', 'feedLogs', 'media',
+        'sheds', 'partitions', 'pastures', 'pastureHealth',
+        'grazingLogs', 'rotationPlans', 'occupancyLogs'
+      ];
+      
+      allTables.forEach(table => {
+        this.writeTable(table, []);
+      });
       return true;
     } catch (error) {
       console.error('Error clearing data:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Migrate an existing database from old path to new path structure
+   * @param {string} oldPath - The old database path
+   * @returns {boolean} - Success status
+   */
+  static async migrateDatabase(oldPath, farmData, newBasePath) {
+    try {
+      // Create new database instance with new path structure
+      const newDb = new DatabaseService(farmData, newBasePath);
+      
+      // If old path is same as new path, no migration needed
+      if (oldPath === newDb.dbPath) {
+        return true;
+      }
+
+      // Check if old database exists
+      if (!fs.existsSync(oldPath)) {
+        console.error('Old database path does not exist:', oldPath);
+        return false;
+      }
+
+      // Create new directory structure
+      if (!fs.existsSync(newDb.dbPath)) {
+        fs.mkdirSync(newDb.dbPath, { recursive: true });
+      }
+
+      // Copy all database files
+      const tables = ['goats', 'weightRecords', 'healthRecords', 'breedingRecords', 
+                     'financeRecords', 'feeds', 'feedPlans', 'feedLogs', 'media'];
+      
+      for (const table of tables) {
+        const oldTablePath = path.join(oldPath, `${table}.json`);
+        const newTablePath = path.join(newDb.dbPath, `${table}.json`);
+        
+        if (fs.existsSync(oldTablePath)) {
+          fs.copyFileSync(oldTablePath, newTablePath);
+        } else {
+          // Initialize empty table if it doesn't exist
+          fs.writeFileSync(newTablePath, JSON.stringify([], null, 2));
+        }
+      }
+
+      // Delete old directory if migration successful
+      if (fs.existsSync(oldPath)) {
+        fs.rmSync(oldPath, { recursive: true, force: true });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error during database migration:', error);
       return false;
     }
   }

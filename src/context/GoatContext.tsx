@@ -4,7 +4,7 @@ import { useGoatData } from '@/hooks/useDatabase';
 import { Goat, WeightRecord, HealthRecord, BreedingRecord, Feed, FeedPlan, FeedLog,  } from '@/types/goat';
 import { MediaFile } from '@/types/goat';
 import { useFarm } from './FarmContext';
-
+ 
 interface GoatContextType {
   goats: Goat[];
   setGoats: React.Dispatch<React.SetStateAction<Goat[]>>;
@@ -26,6 +26,7 @@ interface GoatContextType {
   error: string | null;
   thumbnails: Record<string, string | null>[]; // Thumbnail cache
   refreshThumbnails: () => Promise<void>;
+  reloadData: () => void;
   addGoat: (goat: any) => Promise<any>;
   updateGoat: (id: string, updates: any) => Promise<any>;
   deleteGoat: (id: string) => Promise<boolean>;
@@ -93,7 +94,7 @@ const GoatContext = createContext<GoatContextType | undefined>(undefined);
 export function GoatProvider({ children }: { children: ReactNode }) {
   const { activeFarmId } = useFarm();
   const isElectron = window.electronAPI?.isElectron;
-
+  console.log('GoatProvider initialized. isElectron:', isElectron, 'activeFarmId:', activeFarmId);
   const currentData = useGoatData({ enabled: !!activeFarmId && isElectron });
 
   const [thumbnails, setThumbnails] = useState<Record<string, string | null>[]>([]);
@@ -111,12 +112,14 @@ export function GoatProvider({ children }: { children: ReactNode }) {
   };
 
  // Refreshes when data source changes
-  useEffect(() => {
-    if (activeFarmId) {
-      refreshThumbnails();
-      console.log("Thumbnails refreshed:", thumbnails);
-    }
-  }, [activeFarmId]);
+ useEffect(() => {
+  if (activeFarmId && currentData.reloadData) {
+    console.log('Active farm changed, reloading all data...');
+    currentData.reloadData();
+    refreshThumbnails(); // Keep this if it's separate from main data reload
+  }
+}, [activeFarmId]);
+
   // Utility functions that work with both data sources
   const getGoatWeightHistory = (goatId: string): WeightRecord[] => {
     return (currentData.weightRecords || []).filter((record: WeightRecord) => record.goatId === goatId);
@@ -315,6 +318,7 @@ export function GoatProvider({ children }: { children: ReactNode }) {
     error: currentData.error || null,
     thumbnails,
     refreshThumbnails,
+    reloadData: currentData.reloadData,
     addGoat: currentData.addGoat,
     updateGoat: currentData.updateGoat,
     deleteGoat: currentData.deleteGoat,

@@ -20,8 +20,8 @@ import {
 import { Pasture } from '@/types/farm';
 import { Goat } from '@/types/goat';
 import { RotationPlan, RotationScheduleItem } from '@/types/grazing';
-import { useFarm } from '@/context/FarmContext';
-import { grazingService } from '@/services/grazingService';
+import { useGoatContext } from '@/context/GoatContext';
+import { useFacilities } from '@/context/FacilitiesContext';
 
 interface RotationPlannerProps {
   pastures: Pasture[];
@@ -29,7 +29,7 @@ interface RotationPlannerProps {
 }
 
 export default function RotationPlanner({ pastures, goats }: RotationPlannerProps) {
-  const { farmData, updateFarmData } = useFarm();
+  const { rotationPlans, addRotationPlan, updateRotationPlan } = useFacilities();
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [newPlan, setNewPlan] = useState({
@@ -40,7 +40,6 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
     restPeriod: 14
   });
 
-  const rotationPlans = farmData?.rotationPlans || [];
   const activePlan = rotationPlans.find(plan => plan.isActive);
 
   // Generate rotation schedule preview
@@ -77,24 +76,21 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
     }
 
     // Deactivate existing plans
-    const updatedPlans = rotationPlans.map(plan => ({ ...plan, isActive: false }));
+    if (activePlan) {
+      await updateRotationPlan(activePlan.id, { isActive: false });
+    }
 
-    const rotationPlan: RotationPlan = {
-      id: `rotation_${Date.now()}`,
+    const rotationPlan: Omit<RotationPlan, 'id' | 'createdAt' | 'updatedAt'> = {
       name: newPlan.name.trim(),
-      farmId: farmData?.metadata?.id || '',
+      farmId: '', // farmId will be set in the backend
       pastureIds: newPlan.pastureIds,
       goatGroupIds: [newPlan.goatIds.join(',')], // Simple grouping
       schedule: schedulePreview,
       isActive: true,
       startDate: new Date(selectedDate),
-      createdAt: new Date(),
-      updatedAt: new Date()
     };
 
-    await updateFarmData({
-      rotationPlans: [...updatedPlans, rotationPlan]
-    });
+    await addRotationPlan(rotationPlan as RotationPlan);
 
     // Reset form
     setNewPlan({
@@ -125,8 +121,7 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
     }));
   };
 
-  const getPastureByIdafe = (id: string) => pastures.find(p => p.id === id);
-  const getGoatById = (id: string) => goats.find(g => g.id === id);
+  const getPastureById = (id: string) => pastures.find(p => p.id === id);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -176,7 +171,7 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
                 <Label className="text-sm font-medium">Pastures in Rotation</Label>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {activePlan.pastureIds.map(id => {
-                    const pasture = getPastureByIdafe(id);
+                    const pasture = getPastureById(id);
                     return pasture ? (
                       <Badge key={id} variant="secondary">
                         {pasture.name}
@@ -211,7 +206,7 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
                   .filter(item => new Date(item.endDate) >= new Date())
                   .slice(0, 3)
                   .map(item => {
-                    const pasture = getPastureByIdafe(item.pastureId);
+                    const pasture = getPastureById(item.pastureId);
                     return (
                       <div key={item.id} className="flex items-center justify-between p-2 bg-muted rounded">
                         <div className="flex items-center gap-2">
@@ -314,7 +309,7 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
                 <Label>Schedule Preview</Label>
                 <div className="max-h-60 overflow-y-auto space-y-2">
                   {schedulePreview.map((item, index) => {
-                    const pasture = getPastureByIdafe(item.pastureId);
+                    const pasture = getPastureById(item.pastureId);
                     return (
                       <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
                         <div className="flex items-center gap-2">
@@ -367,7 +362,7 @@ export default function RotationPlanner({ pastures, goats }: RotationPlannerProp
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Pastures: </span>
-                      {plan.pastureIds.map(id => getPastureByIdafe(id)?.name).join(', ')}
+                      {plan.pastureIds.map(id => getPastureById(id)?.name).join(', ')}
                     </div>
                     <div>
                       <span className="font-medium">Schedule: </span>

@@ -198,16 +198,16 @@ export function BulkGoatsEntry() {
             <thead>
               <tr className="bg-muted">
                 <th className="border border-border p-2 text-left">
-                  Name <Badge variant="destructive" className="ml-1">*</Badge>
+                  Name *
                 </th>
                 <th className="border border-border p-2 text-left">
-                  Tag <Badge variant="destructive" className="ml-1">*</Badge>
+                  Tag *
                 </th>
                 <th className="border border-border p-2 text-left">
-                  Breed <Badge variant="destructive" className="ml-1">*</Badge>
+                  Breed *
                 </th>
                 <th className="border border-border p-2 text-left">
-                  Gender <Badge variant="destructive" className="ml-1">*</Badge>
+                  Gender *
                 </th>
                 <th className="border border-border p-2 text-left">Birth Date</th>
                 <th className="border border-border p-2 text-left">Weight (kg)</th>

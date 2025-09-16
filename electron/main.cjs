@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, protocol } = require('electr
 const path = require('path');
 const fs = require('fs');
 const log = require('electron-log');
-
+ 
 // --- Project modules ---
 const GoogleDriveService = require('./services/GoogleDriveService.cjs');
 const CloudBackupService = require('./services/CloudBackupService.cjs');
@@ -11,7 +11,7 @@ const DatabaseService = require('./services/DatabaseService.cjs');
 const PedigreeService = require('./services/PedigreeService.cjs');
 const FileService = require('./services/FileService.cjs');
 const NotificationService = require('./services/NotificationService.cjs');
-const MediaService = require('./services/mediaService.cjs');
+const MediaService = require('./services/MediaService.cjs');
 const syncManager = require('./services/syncManager.cjs');
 const FarmService = require('./services/FarmService.cjs');
 
@@ -25,8 +25,6 @@ let mainWindow = null;
 let googleDriveService = null;
 let cloudBackupService = null;
 let localBackupService = null;
-let databaseService = null;
-let pedigreeService = null;
 let fileService = null;
 let notificationService = null;
 let farmService = null;
@@ -78,8 +76,6 @@ function initializeServices() {
     farmService = new FarmService();
     googleDriveService = new GoogleDriveService();
     cloudBackupService = new CloudBackupService(googleDriveService);
-    localBackupService = new LocalBackupService(databaseService);
-    pedigreeService = new PedigreeService(databaseService);
     fileService = new FileService(mainWindow);
     notificationService = new NotificationService();
     // Note: DatabaseService, PedigreeService, MediaService are now initialized dynamically
@@ -95,17 +91,37 @@ function registerIpcHandlers() {
     ipcMain.handle('farm:create', (e, farmInput) => farmService.createFarm(farmInput));
     ipcMain.handle('farm:update', (e, farmId, updates) => farmService.updateFarm(farmId, updates));
     ipcMain.handle('farm:delete', (e, farmId) => farmService.deleteFarm(farmId));
-    ipcMain.handle('farm:setActive', (e, farmId) => {
+    ipcMain.handle('farm:getActiveId', () => farmService.getActiveFarmId());
+    ipcMain.handle('farm:setActiveId', (e, farmId) => farmService.setActiveFarmId(farmId));
+    ipcMain.handle('farm:initializeServices', (e, farmId) => {
+        const farms = farmService.listFarms();
+        const farm = farms.find(f => f.id === farmId);
+        if (!farm) throw new Error('Farm not found');
+        
         const farmDataPath = farmService.getFarmDataPath(farmId);
-        activeDbService = new DatabaseService(farmDataPath);
+        activeDbService = new DatabaseService(farm, farmService.basePath);
         activePedigreeService = new PedigreeService(activeDbService);
         activeMediaService = new MediaService(activeDbService, fileService);
-        // TODO: Re-initialize other services that depend on the database if any
-        // For now, LocalBackupService might need re-evaluation if it depends on a specific farm.
-        // Let's assume it's for the whole app for now.
         localBackupService = new LocalBackupService(activeDbService);
         return true;
     });
+
+    // --- Farm Map Management ---
+    ipcMain.handle('farm:getFarmMapData', (e, farmId) => farmService.getFarmMapData(farmId));
+    ipcMain.handle('farm:saveFarmMapData', (e, farmId, mapData) => farmService.saveFarmMapData(farmId, mapData));
+    ipcMain.handle('farm:savePastureMapData', (e, farmId, pastureId, mapData) => farmService.savePastureMapData(farmId, pastureId, mapData));
+    ipcMain.handle('farm:getPastureMapData', (e, farmId, pastureId) => farmService.getPastureMapData(farmId, pastureId));
+    ipcMain.handle('farm:getFarmMapBounds', (e, farmId) => farmService.getFarmMapBounds(farmId));
+    ipcMain.handle('farm:isFarmMapAvailable', (e, farmId) => farmService.isFarmMapAvailable(farmId));
+    
+    // --- Map Tile Caching ---
+    ipcMain.handle('farm:cacheTile', (e, farmId, tileKey, tileData) => farmService.cacheTileForFarm(farmId, tileKey, tileData));
+    ipcMain.handle('farm:getCachedTile', (e, farmId, tileKey) => farmService.getCachedTile(farmId, tileKey));
+    ipcMain.handle('farm:cleanupFarmTiles', (e, farmId) => farmService.cleanupFarmTiles(farmId));
+    
+    // --- Farm Data Export/Import ---
+    ipcMain.handle('farm:exportFarmData', (e, farmId) => farmService.exportFarmData(farmId));
+    ipcMain.handle('farm:importFarmData', (e, farmData) => farmService.importFarmData(farmData));
 
     // --- Google Drive Auth ---
     ipcMain.handle('drive:oauth-start', async () => {
@@ -175,6 +191,30 @@ function registerIpcHandlers() {
     ipcMain.handle('db:addWeightRecord', db((s, record) => s.add('weightRecords', record)));
     ipcMain.handle('db:updateWeightRecord', db((s, id, updates) => s.update('weightRecords', id, updates)));
     ipcMain.handle('db:deleteWeightRecord', db((s, id) => s.delete('weightRecords', id)));
+
+    // Facility Management Handlers
+    ipcMain.handle('db:getSheds', db(s => s.getAll('sheds')));
+    ipcMain.handle('db:addShed', db((s, shed) => s.addShed(shed)));
+    ipcMain.handle('db:updateShed', db((s, id, updates) => s.updateShed(id, updates)));
+    ipcMain.handle('db:deleteShed', db((s, id) => s.deleteShed(id)));
+
+    ipcMain.handle('db:getPartitions', db((s, shedId) => s.getPartitionsByShed(shedId)));
+    ipcMain.handle('db:addPartition', db((s, partition) => s.addPartition(partition)));
+    ipcMain.handle('db:updatePartition', db((s, id, updates) => s.updatePartition(id, updates)));
+    ipcMain.handle('db:deletePartition', db((s, id) => s.delete('partitions', id)));
+
+    ipcMain.handle('db:getPastures', db(s => s.getAll('pastures')));
+    ipcMain.handle('db:addPasture', db((s, pasture) => s.addPasture(pasture)));
+    ipcMain.handle('db:updatePasture', db((s, id, updates) => s.updatePasture(id, updates)));
+    ipcMain.handle('db:deletePasture', db((s, id) => s.deletePasture(id)));
+
+    ipcMain.handle('db:addGrazingLog', db((s, log) => s.addGrazingLog(log)));
+    ipcMain.handle('db:getGrazingLogs', db((s, pastureId) => s.readTable('grazingLogs').filter(log => log.pastureId === pastureId)));
+    ipcMain.handle('db:addPastureHealthLog', db((s, log) => s.addPastureHealthLog(log)));
+    ipcMain.handle('db:getPastureHealthLogs', db(s => s.readTable('pastureHealth')));
+    ipcMain.handle('db:addRotationPlan', db((s, plan) => s.addRotationPlan(plan)));
+    ipcMain.handle('db:getRotationPlans', db(s => s.readTable('rotationPlans')));
+    ipcMain.handle('db:getOccupancyHistory', db((s, params) => s.getOccupancyHistory(params.shedId, params.partitionId, params.startDate, params.endDate)));
 
     ipcMain.handle('db:getHealthRecords', db(s => s.getAll('healthRecords')));
     ipcMain.handle('db:addHealthRecord', db((s, record) => s.add('healthRecords', record)));

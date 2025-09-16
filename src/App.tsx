@@ -9,21 +9,24 @@ import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import ElectronGuard from './components/ElectronGuard';
 import { FarmProvider } from './context/FarmContext';
+import { FacilitiesProvider } from './context/FacilitiesContext';
 
 function App() {
   return (
     <ElectronGuard>
       <FarmProvider>
         <ThemeProvider>
-          <GoatProvider>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-            </Router>
-          </GoatProvider>
+          <FacilitiesProvider>
+            <GoatProvider>
+              <Router>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+              </Router>
+            </GoatProvider>
+          </FacilitiesProvider>
         </ThemeProvider>
       </FarmProvider>
     </ElectronGuard>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface FarmMeta {
   id: string; // uuid
   name: string;
@@ -7,6 +8,8 @@ export interface FarmMeta {
     label?: string; 
     address?: string;
   };
+  farmBoundary?: number[][]; // [ [lat, lng], [lat, lng], ... ]
+  mapScreenshot?: string; // base64 screenshot of the farm map
   timezone?: string;
   currency?: string;
   farmType?: 'dairy' | 'meat' | 'mixed' | 'breeding';
@@ -14,7 +17,7 @@ export interface FarmMeta {
   ownerName?: string;
   createdAt: string;
   lastOpenedAt?: string;
-  color?: string; // accent color for farm
+  color?: string;
   passcodeEnabled?: boolean;
   settings?: {
     autoBackup?: boolean;
@@ -27,7 +30,30 @@ export interface FarmMeta {
     };
   };
 }
+export interface MapData {
+  center: [number, number];
+  zoom: number;
+  bounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+  boundary: number[][];
+  screenshot?: string;
+  tileUrls?: string[];
+  savedAt?: string;
+  pastures?: { [pastureId: string]: any };
+}
 
+export interface FarmDataExport {
+  farm: FarmMeta;
+  mapData: MapData | null;
+  exportedAt: string;
+}
+export interface FarmInput extends Omit<FarmMeta, 'id' | 'createdAt'> {
+  mapData?: MapData;
+}
 export interface Shed {
   id: string;
   farmId?: string;
@@ -54,8 +80,7 @@ export interface Pasture {
   id: string;
   farmId: string;
   name: string;
-  center: { lat: number; lon: number };
-  radiusMeters: number;
+  polygon: number[][]; // [ [lat, lng], [lat, lng], ... ]
   notes?: string;
   grassType?: string;
   carryingCapacity?: number; // animals per hectare
@@ -65,6 +90,7 @@ export interface Pasture {
   };
   currentlyGrazing?: string[]; // goat IDs
   lastGrazedAt?: string;
+  screenshot?: string; // base64 screenshot for offline view
   createdAt: string;
   updatedAt?: string;
 }
@@ -78,12 +104,11 @@ export interface FarmContext {
 }
 
 export interface FarmStats {
-  totalGoats: number;
   activeGoats: number;
   totalSheds: number;
   totalPastures: number;
   averageWeight?: number;
-  upcomingReminders: number;
+  upcomingReminders?: number;
   monthlyProfit?: number;
   feedCosts?: number;
   healthCosts?: number;

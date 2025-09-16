@@ -8,7 +8,7 @@ import { HealthAI } from '@/components/HealthAI';
 import GrowthOptimizer from '@/components/GrowthOptimizer';
 import BreedingPlanner from '@/components/breeding/BreedingPlanner';
 import { WeatherDashboard } from '@/components/weather/WeatherDashboard';
-import Settings from '@/components/Settings';
+import Settings from '@/components/settings/Settings';
 import { WeightTracking } from '@/components/weight/WeightTracking';
 import GoatManagement from '@/components/goats/GoatManagement';
 import PedigreeWrapper from '@/components/pedigree/PedigreeWrapper';

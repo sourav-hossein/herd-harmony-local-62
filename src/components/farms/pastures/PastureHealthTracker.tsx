@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,13 +19,26 @@ import {
 import { PastureHealthLog } from '@/types/grazing';
 import { Pasture } from '@/types/farm';
 import { useFarm } from '@/context/FarmContext';
+import { useFacilities } from '@/context/FacilitiesContext';
 
 interface PastureHealthTrackerProps {
   pastures: Pasture[];
 }
 
 export default function PastureHealthTracker({ pastures }: PastureHealthTrackerProps) {
-  const { farmData, updateFarmData } = useFarm();
+  const { pastureHealthLogs, addGrazingLog,     sheds,
+    rotationPlans,
+    loading,
+    error,
+    addShed,
+    updateShed,
+    deleteShed,
+    addPartition,
+    updatePartition,
+    addPasture,
+    updatePasture,
+    deletePasture,
+    addPastureHealthLog,} = useFacilities();
   const [selectedPasture, setSelectedPasture] = useState<string>('');
   const [newHealthLog, setNewHealthLog] = useState<Partial<PastureHealthLog>>({
     condition: 'good',
@@ -32,7 +46,7 @@ export default function PastureHealthTracker({ pastures }: PastureHealthTrackerP
     notes: ''
   });
 
-  const healthLogs = farmData?.pastureHealthLogs || [];
+  const healthLogs = pastureHealthLogs || [];
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -78,7 +92,7 @@ export default function PastureHealthTracker({ pastures }: PastureHealthTrackerP
     };
 
     const updatedLogs = [...healthLogs, healthLog];
-    await updateFarmData({ pastureHealthLogs: updatedLogs });
+    // await updatePasture(pastureHealthLogs. updatedLogs );
 
     // Reset form
     setNewHealthLog({

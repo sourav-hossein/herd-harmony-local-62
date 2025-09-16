@@ -8,26 +8,23 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   ArrowRight, 
-  Edit, 
   Trash2,
   Plus 
 } from 'lucide-react';
 import { Shed, Partition } from '@/types/farm';
-import { Goat } from '@/types/goat';
-import { useFarm } from '@/context/FarmContext';
+import { useFacilities } from '@/context/FacilitiesContext';
+import { useGoatContext } from '@/context/GoatContext';
 
 interface PartitionManagerProps {
   shed: Shed;
   onClose: () => void;
 }
-
+ 
 export default function PartitionManager({ shed, onClose }: PartitionManagerProps) {
-  const { farmData, updateFarmData } = useFarm();
+  const { goats, updateGoat } = useGoatContext();
+  const { updateShed, addPartition, updatePartition } = useFacilities();
   const [selectedGoat, setSelectedGoat] = useState<string>('');
   const [targetPartition, setTargetPartition] = useState<string>('');
-
-  const goats = farmData?.goats || [];
-  const sheds = farmData?.sheds || [];
 
   const getGoatsInPartition = (partitionId?: string) => {
     return goats.filter(goat => 
@@ -44,13 +41,10 @@ export default function PartitionManager({ shed, onClose }: PartitionManagerProp
   const handleMoveGoat = async () => {
     if (!selectedGoat || !targetPartition) return;
 
-    const updatedGoats = goats.map(goat =>
-      goat.id === selectedGoat
-        ? { ...goat, partitionId: targetPartition === 'unassigned' ? undefined : targetPartition }
-        : goat
-    );
+    await updateGoat(selectedGoat, {
+      partitionId: targetPartition === 'unassigned' ? undefined : targetPartition
+    });
 
-    await updateFarmData({ goats: updatedGoats });
     setSelectedGoat('');
     setTargetPartition('');
   };
@@ -58,32 +52,16 @@ export default function PartitionManager({ shed, onClose }: PartitionManagerProp
   const handleAddPartition = async () => {
     const newPartition: Partition = {
       id: `partition_${Date.now()}`,
+      shedId: shed.id,
       name: `Partition ${(shed.partitions?.length || 0) + 1}`,
       capacity: 10,
     };
 
-    const updatedSheds = sheds.map(s =>
-      s.id === shed.id
-        ? { ...s, partitions: [...(s.partitions || []), newPartition] }
-        : s
-    );
-
-    await updateFarmData({ sheds: updatedSheds });
+    await addPartition(newPartition);
   };
 
   const handleEditPartition = async (partitionId: string, updates: Partial<Partition>) => {
-    const updatedSheds = sheds.map(s =>
-      s.id === shed.id
-        ? {
-            ...s,
-            partitions: s.partitions?.map(p =>
-              p.id === partitionId ? { ...p, ...updates } : p
-            ),
-          }
-        : s
-    );
-
-    await updateFarmData({ sheds: updatedSheds });
+    await updatePartition(partitionId, updates);
   };
 
   const handleDeletePartition = async (partitionId: string) => {
@@ -92,26 +70,14 @@ export default function PartitionManager({ shed, onClose }: PartitionManagerProp
     }
 
     // Move goats to unassigned
-    const updatedGoats = goats.map(goat =>
-      goat.partitionId === partitionId
-        ? { ...goat, partitionId: undefined }
-        : goat
+    const goatsToUpdate = goats.filter(goat => goat.partitionId === partitionId);
+    await Promise.all(
+      goatsToUpdate.map(goat => updateGoat(goat.id, { partitionId: undefined }))
     );
 
-    // Remove partition
-    const updatedSheds = sheds.map(s =>
-      s.id === shed.id
-        ? {
-            ...s,
-            partitions: s.partitions?.filter(p => p.id !== partitionId),
-          }
-        : s
-    );
-
-    await updateFarmData({ 
-      goats: updatedGoats,
-      sheds: updatedSheds 
-    });
+    // Remove partition from shed
+    const updatedPartitions = (shed.partitions || []).filter(p => p.id !== partitionId);
+    await updateShed(shed.id, { partitions: updatedPartitions });
   };
 
   const unassignedGoats = getUnassignedGoatsInShed();

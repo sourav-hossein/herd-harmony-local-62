@@ -13,8 +13,10 @@ import {
   AlertTriangle,
   CheckCircle,
   Trash2,
-  Database
+  Database,
+  PlusSquare
 } from 'lucide-react';
+import { MasterEntry } from '../bulk/MasterEntry';
 
 export function DataManagement() {
   const { 
@@ -332,6 +334,19 @@ export function DataManagement() {
               </Alert>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Data Entry */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <PlusSquare className="h-5 w-5 text-primary" />
+            <span>Bulk Data Entry</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MasterEntry />
         </CardContent>
       </Card>
 

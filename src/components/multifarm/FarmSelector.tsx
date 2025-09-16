@@ -17,6 +17,7 @@ import {
 import { FarmMeta, FarmStats } from '@/types/farm';
 import { formatDistanceToNow } from 'date-fns';
 import FarmWizard from './FarmWizard';
+import { useFarm } from '@/context/FarmContext';
 
 interface FarmSelectorProps {
   farms: FarmMeta[];
@@ -29,13 +30,15 @@ interface FarmSelectorProps {
 
 export default function FarmSelector({ 
   farms, 
+
   onSelectFarm, 
   onCreateFarm, 
   onDeleteFarm, 
   onImportBackup,
   farmStats = {}
 }: FarmSelectorProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const { activeFarmId } = useFarm();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(activeFarmId === null);
 
   const handleCreateFarm = (farmData: Omit<FarmMeta, 'id' | 'createdAt'>) => {
     onCreateFarm(farmData);

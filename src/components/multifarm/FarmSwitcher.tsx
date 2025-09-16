@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   ChevronDown, 
   Home, 
@@ -18,19 +19,26 @@ import {
   Upload, 
   Download,
   Users,
-  TrendingUp
+  TrendingUp,
+  Zap,
+  Database,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { FarmMeta, FarmStats } from '@/types/farm';
+import FarmWizard from './FarmWizard';
+import { formatDistanceToNow } from 'date-fns';
 
 interface FarmSwitcherProps {
-  currentFarm: FarmMeta | null;
+  currentFarm: FarmMeta
   farms: FarmMeta[];
   farmStats?: FarmStats;
   onSwitchFarm: (farm: FarmMeta) => void;
-  onCreateFarm: () => void;
+  onCreateFarm: (farm: Omit<FarmMeta, 'id' | 'createdAt'>) => void;
   onFarmSettings: () => void;
   onExportBackup: () => void;
   onImportBackup: () => void;
+  isLoading?: boolean;
 }
 
 export default function FarmSwitcher({ 
@@ -38,143 +46,277 @@ export default function FarmSwitcher({
   farms, 
   farmStats,
   onSwitchFarm, 
-  onCreateFarm, 
+  onCreateFarm,
   onFarmSettings,
   onExportBackup,
-  onImportBackup
+  onImportBackup,
+  isLoading = false
 }: FarmSwitcherProps) {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const getFarmColor = (color?: string) => {
     const colors = {
-      blue: 'text-blue-600 bg-blue-100',
-      green: 'text-green-600 bg-green-100',
-      purple: 'text-purple-600 bg-purple-100',
-      orange: 'text-orange-600 bg-orange-100',
-      red: 'text-red-600 bg-red-100'
+      blue: 'bg-blue-500',
+      green: 'bg-green-500',
+      purple: 'bg-purple-500',
+      orange: 'bg-orange-500',
+      red: 'bg-red-500'
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
+  const getFarmStatusColor = (farm: FarmMeta) => {
+    // Determine farm health status based on various factors
+    if (farm.id === currentFarm?.id) return 'text-green-600 bg-green-100';
+    return 'text-blue-600 bg-blue-100';
+  };
+
+  const handleCreateFarm = (farmData: Omit<FarmMeta, 'id' | 'createdAt'>) => {
+    onCreateFarm(farmData);
+    setIsCreateDialogOpen(false);
+  };
+
+  if (!currentFarm && farms.length === 0) {
+    return (
+      <div className="space-y-3">
+        <Button 
+          variant="outline" 
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="w-full justify-center"
+          disabled={isLoading}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Your First Farm
+        </Button>
+        
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Farm</DialogTitle>
+            </DialogHeader>
+            <FarmWizard onSubmit={handleCreateFarm} />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
   if (!currentFarm) {
     return (
-      <Button variant="outline" onClick={onCreateFarm}>
-        <Plus className="w-4 h-4 mr-2" />
-        Create Farm
-      </Button>
+      <div className="space-y-3">
+        <div className="text-center text-sm text-muted-foreground">
+          No active farm selected
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="w-full"
+          disabled={isLoading}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Farm
+        </Button>
+        
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Farm</DialogTitle>
+            </DialogHeader>
+            <FarmWizard onSubmit={handleCreateFarm} />
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="min-w-full justify-between">
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${getFarmColor(currentFarm.color).split(' ')[1]}`} />
-            <div className="text-left">
-              <div className="font-medium truncate max-w-[120px]">{currentFarm.name}</div>
-              {currentFarm.location?.label && (
-                <div className="text-xs text-muted-foreground flex items-center">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  {currentFarm.location.label}
-                </div>
-              )}
-            </div>
-          </div>
-          <ChevronDown className="w-4 h-4 ml-2" />
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent className="min-w-80" align="start">
-        {/* Current Farm Info */}
-        <DropdownMenuLabel className="p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">{currentFarm.name}</div>
-              <div className="text-xs text-muted-foreground flex items-center mt-1">
-                <Home className="w-3 h-3 mr-1" />
-                {currentFarm.farmType} farm
-              </div>
-            </div>
-            <Badge variant="secondary" className={getFarmColor(currentFarm.color)}>
-              Active
-            </Badge>
-          </div>
-          
-          {/* Quick Stats */}
-          {farmStats && (
-            <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
-              <div className="text-center p-2 bg-muted rounded">
-                <Users className="w-3 h-3 mx-auto mb-1" />
-                <div className="font-medium">{farmStats.activeGoats}</div>
-                <div className="text-muted-foreground">Goats</div>
-              </div>
-              <div className="text-center p-2 bg-muted rounded">
-                <Home className="w-3 h-3 mx-auto mb-1" />
-                <div className="font-medium">{farmStats.totalSheds}</div>
-                <div className="text-muted-foreground">Sheds</div>
-              </div>
-              <div className="text-center p-2 bg-muted rounded">
-                <TrendingUp className="w-3 h-3 mx-auto mb-1" />
-                <div className="font-medium">{farmStats.upcomingReminders}</div>
-                <div className="text-muted-foreground">Alerts</div>
-              </div>
-            </div>
-          )}
-        </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
-        {/* Other Farms */}
-        {farms.filter(f => f.id !== currentFarm.id).length > 0 && (
-          <>
-            <DropdownMenuLabel className="text-xs font-medium text-muted-foreground px-3 py-2">
-              Switch to another farm
-            </DropdownMenuLabel>
-            {farms
-              .filter(f => f.id !== currentFarm.id)
-              .map(farm => (
-                <DropdownMenuItem
-                  key={farm.id}
-                  onClick={() => onSwitchFarm(farm)}
-                  className="p-3 cursor-pointer"
-                >
-                  <div className="flex items-center space-x-3 w-full">
-                    <div className={`w-3 h-3 rounded-full ${getFarmColor(farm.color).split(' ')[1]}`} />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{farm.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {farm.farmType} • {farm.location?.label || 'No location set'}
-                      </div>
-                    </div>
+    <div className="space-y-3">
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="w-full justify-between group hover:shadow-sm transition-all"
+            disabled={isLoading}
+          >
+            <div className="flex items-center min-w-0 flex-1">
+              <div className={`w-3 h-3 rounded-full mr-3 flex-shrink-0 ${getFarmColor(currentFarm.color)}`} />
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-medium truncate">{currentFarm.name}</div>
+                {currentFarm.location?.label && (
+                  <div className="text-xs text-muted-foreground flex items-center">
+                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">{currentFarm.location.label}</span>
                   </div>
-                </DropdownMenuItem>
-              ))}
-            <DropdownMenuSeparator />
-          </>
-        )}
+                )}
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 ml-2 flex-shrink-0 group-hover:rotate-180 transition-transform" />
+          </Button>
+        </DropdownMenuTrigger>
 
-        {/* Actions */}
-        <DropdownMenuItem onClick={onCreateFarm} className="p-3 cursor-pointer">
-          <Plus className="w-4 h-4 mr-3" />
-          <span>Create New Farm</span>
-        </DropdownMenuItem>
+        <DropdownMenuContent className="w-80" align="start" side="bottom">
+          {/* Current Farm Status */}
+          <DropdownMenuLabel className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium flex items-center">
+                  {currentFarm.name}
+                  <CheckCircle2 className="w-4 h-4 ml-2 text-green-500" />
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center mt-1">
+                  <Home className="w-3 h-3 mr-1" />
+                  {currentFarm.farmType || 'Mixed'} farm
+                  {currentFarm.lastOpenedAt && (
+                    <>
+                      <span className="mx-1">•</span>
+                      <span>Active {formatDistanceToNow(new Date(currentFarm.lastOpenedAt))} ago</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                Active
+              </Badge>
+            </div>
+            
+            {/* Enhanced Quick Stats */}
+            {farmStats && (
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center p-2 bg-muted/50 rounded-md hover:bg-muted transition-colors">
+                  <Users className="w-4 h-4 mx-auto mb-1 text-blue-600" />
+                  <div className="font-semibold text-blue-600">{farmStats.activeGoats || 0}</div>
+                  <div className="text-muted-foreground">Goats</div>
+                </div>
+                <div className="text-center p-2 bg-muted/50 rounded-md hover:bg-muted transition-colors">
+                  <Database className="w-4 h-4 mx-auto mb-1 text-purple-600" />
+                  <div className="font-semibold text-purple-600">{farmStats.totalSheds || 0}</div>
+                  <div className="text-muted-foreground">Facilities</div>
+                </div>
+                <div className="text-center p-2 bg-muted/50 rounded-md hover:bg-muted transition-colors">
+                  <AlertCircle className="w-4 h-4 mx-auto mb-1 text-orange-600" />
+                  <div className="font-semibold text-orange-600">{farmStats.upcomingReminders || 0}</div>
+                  <div className="text-muted-foreground">Alerts</div>
+                </div>
+              </div>
+            )}
 
-        <DropdownMenuSeparator />
+            {/* Farm Health Indicator */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-2 rounded-md border">
+              <div className="flex items-center text-xs">
+                <Zap className="w-3 h-3 mr-1 text-green-600" />
+                <span className="font-medium text-green-700">Farm Status: Healthy</span>
+                <div className="ml-auto">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </DropdownMenuLabel>
 
-        <DropdownMenuItem onClick={onFarmSettings} className="p-3 cursor-pointer">
-          <Settings className="w-4 h-4 mr-3" />
-          <span>Farm Settings</span>
-        </DropdownMenuItem>
+          <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={onExportBackup} className="p-3 cursor-pointer">
-          <Download className="w-4 h-4 mr-3" />
-          <span>Export Backup</span>
-        </DropdownMenuItem>
+          {/* Switch Farm Section */}
+          {farms.filter(f => f.id !== currentFarm.id).length > 0 && (
+            <>
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground px-4 py-2">
+                Switch Farm ({farms.filter(f => f.id !== currentFarm.id).length} available)
+              </DropdownMenuLabel>
+              <div className="max-h-48 overflow-y-auto">
+                {farms
+                  .filter(f => f.id !== currentFarm.id)
+                  .sort((a, b) => new Date(b.lastOpenedAt || 0).getTime() - new Date(a.lastOpenedAt || 0).getTime())
+                  .map(farm => (
+                    <DropdownMenuItem
+                      key={farm.id}
+                      onClick={() => {
+                        onSwitchFarm(farm);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="p-3 cursor-pointer hover:bg-muted/80 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3 w-full min-w-0">
+                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getFarmColor(farm.color)}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{farm.name}</div>
+                          <div className="text-xs text-muted-foreground flex items-center">
+                            <span className="truncate">
+                              {farm.farmType || 'Mixed'} • {farm.location?.label || 'Location not set'}
+                            </span>
+                            {farm.lastOpenedAt && (
+                              <span className="ml-1 flex-shrink-0">
+                                • {formatDistanceToNow(new Date(farm.lastOpenedAt))} ago
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+              </div>
+              <DropdownMenuSeparator />
+            </>
+          )}
 
-        <DropdownMenuItem onClick={onImportBackup} className="p-3 cursor-pointer">
-          <Upload className="w-4 h-4 mr-3" />
-          <span>Import Backup</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {/* Actions Section */}
+          <div className="p-2 space-y-1">
+            <DropdownMenuItem 
+              onClick={() => {
+                setIsCreateDialogOpen(true);
+                setIsDropdownOpen(false);
+              }} 
+              className="p-3 cursor-pointer rounded-md hover:bg-muted/80 transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-3 text-green-600" />
+              <span className="font-medium">Create New Farm</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator className="my-1" />
+
+            <DropdownMenuItem 
+              onClick={() => {
+                onFarmSettings();
+                setIsDropdownOpen(false);
+              }} 
+              className="p-3 cursor-pointer rounded-md hover:bg-muted/80 transition-colors"
+            >
+              <Settings className="w-4 h-4 mr-3 text-blue-600" />
+              <span>Farm Settings</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem 
+              onClick={() => {
+                onExportBackup();
+                setIsDropdownOpen(false);
+              }} 
+              className="p-3 cursor-pointer rounded-md hover:bg-muted/80 transition-colors"
+            >
+              <Download className="w-4 h-4 mr-3 text-purple-600" />
+              <span>Export Backup</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem 
+              onClick={() => {
+                onImportBackup();
+                setIsDropdownOpen(false);
+              }} 
+              className="p-3 cursor-pointer rounded-md hover:bg-muted/80 transition-colors"
+            >
+              <Upload className="w-4 h-4 mr-3 text-orange-600" />
+              <span>Import Backup</span>
+            </DropdownMenuItem>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Create Farm Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Farm</DialogTitle>
+          </DialogHeader>
+          <FarmWizard onSubmit={handleCreateFarm} />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

@@ -20,7 +20,7 @@ import { useGoatContext } from '@/context/GoatContext';
 import { Goat } from '@/types/goat';
 import GoatCard from './GoatCard';
 import InteractiveGoatProfile from './InteractiveGoatProfile';
-import GoatForm from '../GoatForm';
+import GoatForm from './GoatForm';
 import { toast } from '@/components/ui/use-toast';
 import { c } from 'node_modules/framer-motion/dist/types.d-Cjd591yU';
 
