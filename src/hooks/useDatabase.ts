@@ -44,6 +44,12 @@ export function useDatabase<T>(tableName: string, initialValue: T, options: { en
         case 'breedingRecords':
           result = await window.electronAPI!.getBreedingRecords();
           break;
+        case 'heatCycles':
+          result = await window.electronAPI!.getHeatCycles();
+          break;
+        case 'kiddingRecords':
+          result = await window.electronAPI!.getKiddingRecords();
+          break;
         case 'financeRecords':
           result = await window.electronAPI!.getFinanceRecords();
           break;
@@ -97,6 +103,8 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
   const weightRecords = useDatabase('weightRecords', [], options);
   const healthRecords = useDatabase('healthRecords', [], options);
   const breedingRecords = useDatabase('breedingRecords', [], options);
+  const heatCycles = useDatabase('heatCycles', [], options);
+  const kiddingRecords = useDatabase('kiddingRecords', [], options);
   const financeRecords = useDatabase('financeRecords', [], options);
   const feeds = useDatabase('feeds', [], options);
   const feedPlans = useDatabase('feedPlans', [], options);
@@ -107,6 +115,8 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
     weightRecords.reload();
     healthRecords.reload();
     breedingRecords.reload();
+    heatCycles.reload();
+    kiddingRecords.reload();
     financeRecords.reload();
     feeds.reload();
     feedPlans.reload();
@@ -201,6 +211,48 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
       const success = await window.electronAPI!.deleteBreedingRecord(id);
       if (success) {
         await breedingRecords.reload();
+      }
+      return success;
+    },
+
+    // Heat cycle operations
+    addHeatCycle: async (record: any) => {
+      const newRecord = await window.electronAPI!.addHeatCycle(record);
+      await heatCycles.reload();
+      return newRecord;
+    },
+
+    updateHeatCycle: async (id: string, updates: any) => {
+      const updatedRecord = await window.electronAPI!.updateHeatCycle(id, updates);
+      await heatCycles.reload();
+      return updatedRecord;
+    },
+
+    deleteHeatCycle: async (id: string) => {
+      const success = await window.electronAPI!.deleteHeatCycle(id);
+      if (success) {
+        await heatCycles.reload();
+      }
+      return success;
+    },
+
+    // Kidding record operations
+    addKiddingRecord: async (record: any) => {
+      const newRecord = await window.electronAPI!.addKiddingRecord(record);
+      await kiddingRecords.reload();
+      return newRecord;
+    },
+
+    updateKiddingRecord: async (id: string, updates: any) => {
+      const updatedRecord = await window.electronAPI!.updateKiddingRecord(id, updates);
+      await kiddingRecords.reload();
+      return updatedRecord;
+    },
+
+    deleteKiddingRecord: async (id: string) => {
+      const success = await window.electronAPI!.deleteKiddingRecord(id);
+      if (success) {
+        await kiddingRecords.reload();
       }
       return success;
     },
@@ -351,6 +403,8 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
           weightRecords.reload(),
           healthRecords.reload(),
           breedingRecords.reload(),
+          heatCycles.reload(),
+          kiddingRecords.reload(),
           financeRecords.reload(),
           feeds.reload(),
           feedPlans.reload(),
@@ -368,6 +422,8 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
           weightRecords.reload(),
           healthRecords.reload(),
           breedingRecords.reload(),
+          heatCycles.reload(),
+          kiddingRecords.reload(),
           financeRecords.reload(),
           feeds.reload(),
           feedPlans.reload(),
@@ -387,6 +443,10 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
     setHealthRecords: healthRecords.setData,
     breedingRecords: breedingRecords.data,
     setBreedingRecords: breedingRecords.setData,
+    heatCycles: heatCycles.data,
+    setHeatCycles: heatCycles.setData,
+    kiddingRecords: kiddingRecords.data,
+    setKiddingRecords: kiddingRecords.setData,
     financeRecords: financeRecords.data,
     setFinanceRecords: financeRecords.setData,
     feeds: feeds.data,
@@ -395,8 +455,8 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
     setFeedPlans: feedPlans.setData,
     feedLogs: feedLogs.data,
     setFeedLogs: feedLogs.setData,
-    loading: goats.loading || weightRecords.loading || healthRecords.loading || breedingRecords.loading || financeRecords.loading || feeds.loading || feedPlans.loading || feedLogs.loading,
-    error: goats.error || weightRecords.error || healthRecords.error || breedingRecords.error || financeRecords.error || feeds.error || feedPlans.error || feedLogs.error,
+    loading: goats.loading || weightRecords.loading || healthRecords.loading || breedingRecords.loading || heatCycles.loading || kiddingRecords.loading || financeRecords.loading || feeds.loading || feedPlans.loading || feedLogs.loading,
+    error: goats.error || weightRecords.error || healthRecords.error || breedingRecords.error || heatCycles.error || kiddingRecords.error || financeRecords.error || feeds.error || feedPlans.error || feedLogs.error,
     reloadData,
     ...electronOperations
   };

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useGoatData } from '@/hooks/useDatabase';
-import { Goat, WeightRecord, HealthRecord, BreedingRecord, Feed, FeedPlan, FeedLog,  } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord, BreedingRecord, Feed, FeedPlan, FeedLog, HeatCycle, KiddingRecord } from '@/types/goat';
 import { MediaFile } from '@/types/goat';
 import { useFarm } from './FarmContext';
  
@@ -14,6 +14,10 @@ interface GoatContextType {
   setHealthRecords: React.Dispatch<React.SetStateAction<HealthRecord[]>>;
   breedingRecords: BreedingRecord[];
   setBreedingRecords: React.Dispatch<React.SetStateAction<BreedingRecord[]>>;
+  // heatCycles: HeatCycle[];
+  // setHeatCycles: React.Dispatch<React.SetStateAction<HeatCycle[]>>;
+  // kiddingRecords: KiddingRecord[];
+  // setKiddingRecords: React.Dispatch<React.SetStateAction<KiddingRecord[]>>;
   financeRecords: any[];
   setFinanceRecords: React.Dispatch<React.SetStateAction<any[]>>;
   feeds: Feed[];
@@ -39,6 +43,12 @@ interface GoatContextType {
   addBreedingRecord: (record: any) => Promise<any>;
   updateBreedingRecord: (id: string, updates: any) => Promise<any>;
   deleteBreedingRecord: (id: string) => Promise<boolean>;
+  // addHeatCycle: (record: any) => Promise<any>;
+  // updateHeatCycle: (id: string, updates: any) => Promise<any>;
+  // deleteHeatCycle: (id: string) => Promise<boolean>;
+  // addKiddingRecord: (record: any) => Promise<any>;
+  // updateKiddingRecord: (id: string, updates: any) => Promise<any>;
+  // deleteKiddingRecord: (id: string) => Promise<boolean>;
   addFinanceRecord: (record: any) => Promise<any>;
   updateFinanceRecord: (id: string, updates: any) => Promise<any>;
   deleteFinanceRecord: (id: string) => Promise<boolean>;
@@ -118,7 +128,7 @@ export function GoatProvider({ children }: { children: ReactNode }) {
     currentData.reloadData();
     refreshThumbnails(); // Keep this if it's separate from main data reload
   }
-}, [activeFarmId]);
+}, [activeFarmId, currentData.reloadData]);
 
   // Utility functions that work with both data sources
   const getGoatWeightHistory = (goatId: string): WeightRecord[] => {
@@ -306,6 +316,10 @@ export function GoatProvider({ children }: { children: ReactNode }) {
     setHealthRecords: currentData.setHealthRecords,
     breedingRecords: currentData.breedingRecords || [],
     setBreedingRecords: currentData.setBreedingRecords,
+    // heatCycles: currentData.heatCycles || [],
+    // setHeatCycles: currentData.setHeatCycles,
+    // kiddingRecords: currentData.kiddingRecords || [],
+    // setKiddingRecords: currentData.setKiddingRecords,
     financeRecords: currentData.financeRecords || [],
     setFinanceRecords: currentData.setFinanceRecords,
     feeds: currentData.feeds || [],
@@ -331,6 +345,12 @@ export function GoatProvider({ children }: { children: ReactNode }) {
     addBreedingRecord: currentData.addBreedingRecord,
     updateBreedingRecord: currentData.updateBreedingRecord,
     deleteBreedingRecord: currentData.deleteBreedingRecord,
+    //  addHeatCycle: currentData.addHeatCycle,
+    // updateHeatCycle: currentData.updateHeatCycle,
+    // deleteHeatCycle: currentData.deleteHeatCycle,
+    // addKiddingRecord: currentData.addKiddingRecord,
+    // updateKiddingRecord: currentData.updateKiddingRecord,
+    // deleteKiddingRecord: currentData.deleteKiddingRecord,
     addFinanceRecord: currentData.addFinanceRecord,
     updateFinanceRecord: currentData.updateFinanceRecord,
     deleteFinanceRecord: currentData.deleteFinanceRecord,

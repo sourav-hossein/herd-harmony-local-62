@@ -196,7 +196,7 @@ export default function FeedPlans({ feeds, feedPlans, onAddFeedPlan, onUpdateFee
                   <Label htmlFor="groupType">Group Type</Label>
                   <Select
                     value={formData.groupType}
-                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, groupType: value }))}
+                    onValueChange={(value: string) => setFormData(prev => ({ ...prev, groupType: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />

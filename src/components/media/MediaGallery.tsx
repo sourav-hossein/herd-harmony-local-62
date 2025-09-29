@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,7 +44,7 @@ export default function MediaGallery({
   config = {},
   className = ""
 }: MediaGalleryProps) {
-  const finalConfig = { ...defaultConfig, ...config };
+  const finalConfig = useMemo(() => ({ ...defaultConfig, ...config }), [config]);
   const [uploadProgress, setUploadProgress] = useState<MediaUploadProgress[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

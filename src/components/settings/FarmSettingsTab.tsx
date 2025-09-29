@@ -13,7 +13,7 @@ import OfflineMapComponent from '../multifarm/OfflineMapComponent';
 export default function FarmSettingsTab() {
   const { farmData, activeFarmId, refreshFarms } = useFarm();
   const { toast } = useToast();
-  const { setCustomAccentColor, setAccentColor } = useTheme();
+  const { setAccentColor } = useTheme();
 
   const [currentFarm, setCurrentFarm] = useState<Partial<FarmMeta>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -22,10 +22,9 @@ export default function FarmSettingsTab() {
     if (farmData?.metadata) {
       setCurrentFarm(farmData.metadata);
       // Set the theme accent color to the farm's color when the tab is loaded
-      setCustomAccentColor(farmData.metadata.color || '#3b82f6');
-      setAccentColor('custom');
+      setAccentColor(farmData.metadata.color || '#3b82f6');
     }
-  }, [farmData, setCustomAccentColor, setAccentColor]);
+  }, [farmData, setAccentColor]);
 
   const farmTypes = [
     { label: 'Dairy', value: 'dairy', description: 'Focus on milk production' },
@@ -169,10 +168,10 @@ export default function FarmSettingsTab() {
           </div>
         </div>
 
-        <FarmColorPicker
+        {/* <FarmColorPicker
           color={currentFarm.color || '#3b82f6'}
           onChange={handleColorChange}
-        />
+        /> */}
 
         <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? 'Saving...' : 'Save Changes'}

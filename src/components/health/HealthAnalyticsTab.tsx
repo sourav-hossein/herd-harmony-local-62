@@ -29,13 +29,37 @@ import { useGoatContext } from '@/context/GoatContext';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+interface HealthTrend {
+  month: string;
+  vaccination: number;
+  treatment: number;
+  checkup: number;
+  deworming: number;
+}
+
+interface TypeDistribution {
+  name: string;
+  value: number;
+}
+
+interface MonthlyStat {
+  month: string;
+  totalRecords: number;
+  uniqueGoats: number;
+}
+
+interface CostAnalysis {
+  type: string;
+  cost: number;
+}
+
 export function HealthAnalyticsTab() {
   const { goats, healthRecords } = useGoatContext();
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
-  const [healthTrends, setHealthTrends] = useState<any[]>([]);
-  const [typeDistribution, setTypeDistribution] = useState<any[]>([]);
-  const [monthlyStats, setMonthlyStats] = useState<any[]>([]);
-  const [costAnalysis, setCostAnalysis] = useState<any[]>([]);
+  const [healthTrends, setHealthTrends] = useState<HealthTrend[]>([]);
+  const [typeDistribution, setTypeDistribution] = useState<TypeDistribution[]>([]);
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([]);
+  const [costAnalysis, setCostAnalysis] = useState<CostAnalysis[]>([]);
 
   useEffect(() => {
     const loadAnalytics = () => {
@@ -64,13 +88,15 @@ export function HealthAnalyticsTab() {
       );
 
       // Health trends over time
-      const trendData: { [key: string]: any } = {};
+      const trendData: Record<string, { month: string; vaccination: number; treatment: number; checkup: number; deworming: number; }> = {};
       periodRecords.forEach(record => {
         const month = new Date(record.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         if (!trendData[month]) {
           trendData[month] = { month, vaccination: 0, treatment: 0, checkup: 0, deworming: 0 };
         }
-        trendData[month][record.type]++;
+        if (record.type === 'vaccination' || record.type === 'treatment' || record.type === 'checkup' || record.type === 'deworming') {
+          trendData[month][record.type]++;
+        }
       });
       
       setHealthTrends(Object.values(trendData));
@@ -89,7 +115,7 @@ export function HealthAnalyticsTab() {
       );
 
       // Monthly statistics
-      const monthlyData: { [key: string]: any } = {};
+      const monthlyData: Record<string, { month: string; totalRecords: number; uniqueGoats: Set<string>; }> = {};
       periodRecords.forEach(record => {
         const month = new Date(record.date).toLocaleDateString('en-US', { month: 'short' });
         if (!monthlyData[month]) {
@@ -100,7 +126,7 @@ export function HealthAnalyticsTab() {
       });
 
       setMonthlyStats(
-        Object.entries(monthlyData).map(([month, data]: [string, any]) => ({
+        Object.entries(monthlyData).map(([month, data]) => ({
           month,
           totalRecords: data.totalRecords,
           uniqueGoats: data.uniqueGoats.size

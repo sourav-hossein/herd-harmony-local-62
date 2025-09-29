@@ -39,7 +39,7 @@ export function BulkHealthEntry() {
           await addHealthRecord({
             id: uuidv4(),
             goatId: goat.id,
-            type: row.type as any,
+            type: row.type as 'vaccination' | 'treatment' | 'checkup' | 'medication' | 'injury' | 'illness' | 'deworming',
             description: row.description,
             date: new Date(row.date),
             cost: row.cost ? Number(row.cost) : undefined,

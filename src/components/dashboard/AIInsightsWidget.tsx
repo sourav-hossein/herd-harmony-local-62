@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,20 +33,10 @@ export default function AIInsightsWidget({ onOpenSettings, className }: AIInsigh
   const [lastGenerated, setLastGenerated] = useState<Date | null>(null);
   
   const { goats, healthRecords, breedingRecords } = useGoatContext();
-  const { activeFarmId } = useFarm();
+  const { farmData } = useFarm();
   const { toast } = useToast();
 
-  useEffect(() => {
-    checkAISettings();
-  }, []);
-
-  useEffect(() => {
-    if (isEnabled && insights.length === 0) {
-      generateInsights();
-    }
-  }, [isEnabled]);
-
-  const checkAISettings = () => {
+  const checkAISettings = useCallback(() => {
     try {
       const stored = localStorage.getItem('aiSettings');
       if (stored) {
@@ -59,16 +49,15 @@ export default function AIInsightsWidget({ onOpenSettings, className }: AIInsigh
     } catch (error) {
       console.error('Failed to load AI settings:', error);
     }
-  };
+  }, []);
 
-  const generateInsights = async () => {
+  const generateInsights = useCallback(async () => {
     if (!isEnabled || isLoading) return;
 
     setIsLoading(true);
     const newInsights: AIInsight[] = [];
 
     try {
-      // Generate different types of insights based on available data
       if (goats.length > 0) {
         try {
           const pedigreeInsight = await aiService.generatePedigreeInsights(goats);
@@ -87,9 +76,8 @@ export default function AIInsightsWidget({ onOpenSettings, className }: AIInsigh
         }
       }
 
-      // Try to generate financial insights if finance records exist
       try {
-        const financeRecords = JSON.parse(localStorage.getItem('financeRecords') || '[]');
+        const financeRecords = await window.electronAPI.getFinanceRecords();
         if (financeRecords.length > 0) {
           const financeInsight = await aiService.generateFinanceInsights(financeRecords);
           newInsights.push(financeInsight);
@@ -98,18 +86,16 @@ export default function AIInsightsWidget({ onOpenSettings, className }: AIInsigh
         console.warn('Failed to generate finance insights:', error);
       }
 
-      // Try to generate grazing insights if grazing data exists
-      try {
-        const farmData = JSON.parse(localStorage.getItem(`farm_${selectedFarm?.id}`) || '{}');
-        if (farmData.pastures && farmData.grazingLogs) {
+      if (farmData?.mapData) {
+        try {
           const grazingInsight = await aiService.generateGrazingInsights(
-            farmData.pastures, 
-            farmData.grazingLogs
+            Object.values(farmData.mapData.pastures || {}),
+            [] // No grazing logs available here, might need context update
           );
           newInsights.push(grazingInsight);
+        } catch (error) {
+          console.warn('Failed to generate grazing insights:', error);
         }
-      } catch (error) {
-        console.warn('Failed to generate grazing insights:', error);
       }
 
       setInsights(newInsights);
@@ -131,7 +117,18 @@ export default function AIInsightsWidget({ onOpenSettings, className }: AIInsigh
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isEnabled, isLoading, goats, healthRecords, farmData, toast]);
+  
+
+  useEffect(() => {
+    checkAISettings();
+  }, [checkAISettings]);
+
+  useEffect(() => {
+    if (isEnabled && insights.length === 0) {
+      generateInsights();
+    }
+  }, [isEnabled, insights.length, generateInsights]);
 
   const dismissInsight = (insightId: string) => {
     setInsights(prev => prev.filter(insight => insight.id !== insightId));

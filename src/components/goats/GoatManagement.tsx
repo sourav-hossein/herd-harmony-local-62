@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,8 @@ import GoatCard from './GoatCard';
 import InteractiveGoatProfile from './InteractiveGoatProfile';
 import GoatForm from './GoatForm';
 import { toast } from '@/components/ui/use-toast';
-import { c } from 'node_modules/framer-motion/dist/types.d-Cjd591yU';
+import BreedingForm from '../breeding/BreedingForm';
+import { BreedingRecord } from '@/types/breeding';
 
 export default function GoatManagement() {
   const { 
@@ -50,6 +50,7 @@ export default function GoatManagement() {
   const [selectedGoat, setSelectedGoat] = useState<Goat | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isBreedingFormOpen, setIsBreedingFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -141,11 +142,8 @@ export default function GoatManagement() {
   };
 
   const handleQuickBreeding = (goat: Goat) => {
-    toast({
-      title: "Quick Breeding",
-      description: `Opening breeding form for ${goat.name}`,
-    });
-    // TODO: Implement actual breeding form opening logic
+    setSelectedGoat(goat);
+    setIsBreedingFormOpen(true);
   };
 
   const handleToggleFavorite = async (goat: Goat) => {
@@ -189,6 +187,23 @@ export default function GoatManagement() {
     }
   };
 
+  const handleSubmitBreeding = async (breedingData: BreedingRecord) => {
+    try {
+      await addBreedingRecord(breedingData);
+      toast({
+        title: "Success",
+        description: "Breeding record added successfully",
+      });
+      setIsBreedingFormOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add breeding record",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -212,6 +227,8 @@ export default function GoatManagement() {
   const favoriteGoats = goats.filter(g => g.isFavorite);
   const activeGoats = goats.filter(g => g.status === 'active');
   const pregnantGoats = goats.filter(g => g.breedingStatus === 'pregnant');
+  const does = goats.filter(g => g.gender === 'female' && g.status === 'active');
+  const bucks = goats.filter(g => g.gender === 'male' && g.status === 'active');
 
   return (
     <div className="space-y-6">
@@ -434,6 +451,15 @@ export default function GoatManagement() {
         onSubmit={handleSubmitGoat}
       />
 
+      {isBreedingFormOpen && (
+        <BreedingForm
+          does={does}
+          bucks={bucks}
+          onSubmit={handleSubmitBreeding}
+          onCancel={() => setIsBreedingFormOpen(false)}
+        />
+      )}
+
       <InteractiveGoatProfile
         goat={selectedGoat}
         isOpen={isProfileOpen}
@@ -457,3 +483,4 @@ export default function GoatManagement() {
     </div>
   );
 }
+

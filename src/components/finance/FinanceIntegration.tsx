@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +27,7 @@ export function FinanceIntegration() {
   
   const [stats, setStats] = useState<FinanceStats | null>(null);
 
-  useEffect(() => {
-    calculateStats();
-  }, [financeRecords]);
-
-  const calculateStats = () => {
+  const calculateStats = useCallback(() => {
     if (!financeRecords.length) return;
 
     const totalIncome = financeRecords
@@ -66,7 +62,7 @@ export function FinanceIntegration() {
       else acc[month].expenses += r.amount;
       
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, { month: string; income: number; expenses: number; }>);
 
     const stats: FinanceStats = {
       totalIncome,
@@ -84,7 +80,11 @@ export function FinanceIntegration() {
     };
 
     setStats(stats);
-  };
+  }, [financeRecords]);
+
+  useEffect(() => {
+    calculateStats();
+  }, [calculateStats]);
 
   const insights = stats ? FinanceAI.generateInsights(financeRecords, stats) : [];
 

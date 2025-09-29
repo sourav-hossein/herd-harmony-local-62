@@ -82,6 +82,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateBreedingRecord: (id, updates) => ipcRenderer.invoke('db:updateBreedingRecord', id, updates),
   deleteBreedingRecord: (id) => ipcRenderer.invoke('db:deleteBreedingRecord', id),
 
+  // Database - Heat Cycles
+  getHeatCycles: () => ipcRenderer.invoke('db:getHeatCycles'),
+  addHeatCycle: (record) => ipcRenderer.invoke('db:addHeatCycle', record),
+  updateHeatCycle: (id, updates) => ipcRenderer.invoke('db:updateHeatCycle', id, updates),
+  deleteHeatCycle: (id) => ipcRenderer.invoke('db:deleteHeatCycle', id),
+
+  // Database - Kidding Records
+  getKiddingRecords: () => ipcRenderer.invoke('db:getKiddingRecords'),
+  addKiddingRecord: (record) => ipcRenderer.invoke('db:addKiddingRecord', record),
+  updateKiddingRecord: (id, updates) => ipcRenderer.invoke('db:updateKiddingRecord', id, updates),
+  deleteKiddingRecord: (id) => ipcRenderer.invoke('db:deleteKiddingRecord', id),
+
   // Database - Finance Records
   getFinanceRecords: () => ipcRenderer.invoke('db:getFinanceRecords'),
   addFinanceRecord: (record) => ipcRenderer.invoke('db:addFinanceRecord', record),

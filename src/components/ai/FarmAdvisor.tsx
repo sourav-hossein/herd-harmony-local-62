@@ -91,9 +91,9 @@ What would you like to know about your farm today?`,
   const buildFarmContext = () => {
     return {
       farm: {
-        name: selectedFarm?.name || 'Current Farm',
+        name: activeFarmId ? farms.find(f => f.id === activeFarmId)?.name || 'Current Farm' : 'Current Farm',
         totalGoats: goats.length,
-        activeGoats: goats.filter(g => !g.isDeceased).length,
+        activeGoats: goats.filter(g => g.status !== "deceased").length,
         totalPastures: 0, // Will be updated when pasture data is available
       },
       goats: {
@@ -119,7 +119,7 @@ What would you like to know about your farm today?`,
 
   const calculateAverageAge = () => {
     const ages = goats
-      .filter(g => g.birthDate && !g.isDeceased)
+      .filter(g => g.birthDate && g.status !== "deceased")
       .map(g => {
         const birth = new Date(g.birthDate!);
         const now = new Date();
@@ -153,7 +153,7 @@ What would you like to know about your farm today?`,
 
   const getActiveBreeders = () => {
     return goats.filter(g => 
-      !g.isDeceased && 
+      g.status !== "deceased" && 
       (g.gender === 'male' || (g.gender === 'female' && g.breedingStatus !== 'not_breeding'))
     ).length;
   };

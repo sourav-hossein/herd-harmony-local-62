@@ -153,7 +153,7 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
     } else {
       setPedigreeValidation({ isValid: true, warnings: [], errors: [] });
     }
-  }, [formData.fatherId, formData.motherId, formData.birthDate, formData.name, goat, goats]);
+  }, [formData.fatherId, formData.motherId, formData.birthDate, formData.name, formData.breed, formData.color, formData.gender, formData.hornStatus, formData.notes, formData.status, formData.tagNumber, goat, goats]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -95,7 +95,7 @@ export default function GoatLifeTimeline({ goat, className = "" }: GoatLifeTimel
 
     // Sort by date
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [goat]);
+  }, [goat, mediaFiles]);
 
   // Filter events
   const filteredEvents = useMemo(() => {

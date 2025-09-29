@@ -11,7 +11,7 @@ import { Plus, Trash2, Save, AlertCircle } from 'lucide-react';
 import { useGoatContext } from '@/context/GoatContext';
 import { useFarm } from '@/context/FarmContext';
 import { useToast } from '@/hooks/use-toast';
-import { BulkService } from '@/services/bulkService';
+import { BulkService, BulkValidationError } from '@/services/bulkService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface GoatRow {
@@ -34,7 +34,7 @@ interface GoatRow {
 export function BulkGoatsEntry() {
   const [rows, setRows] = useState<GoatRow[]>([createEmptyRow()]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<any[]>([]);
+  const [validationErrors, setValidationErrors] = useState<BulkValidationError[]>([]);
 
   const { goats, addGoat } = useGoatContext();
   const { activeFarmId } = useFarm();

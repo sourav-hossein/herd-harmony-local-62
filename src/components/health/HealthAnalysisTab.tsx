@@ -20,17 +20,32 @@ import {
   Pill
 } from 'lucide-react';
 import { useGoatContext } from '@/context/GoatContext';
-import { healthAI } from '@/lib/healthAI';
+import { healthAI, HealthSuggestion } from '@/lib/healthAI';
 import { useToast } from '@/hooks/use-toast';
+
+interface HealthPattern {
+  type: string;
+  title: string;
+  description: string;
+  status: 'good' | 'warning' | 'info';
+  recommendation: string;
+}
+
+interface RiskAssessment {
+  score: number;
+  level: 'Low' | 'Medium' | 'High';
+  factors: string[];
+  recommendations: string[];
+}
 
 export function HealthAnalysisTab() {
   const { goats, healthRecords } = useGoatContext();
   const { toast } = useToast();
   const [selectedGoatId, setSelectedGoatId] = useState('');
   const [symptoms, setSymptoms] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
-  const [healthPatterns, setHealthPatterns] = useState<any[]>([]);
-  const [riskAssessment, setRiskAssessment] = useState<any>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<HealthSuggestion[]>([]);
+  const [healthPatterns, setHealthPatterns] = useState<HealthPattern[]>([]);
+  const [riskAssessment, setRiskAssessment] = useState<RiskAssessment | null>(null);
 
   const activeGoats = goats.filter(goat => goat.status === 'active');
   const selectedGoat = goats.find(g => g.id === selectedGoatId);

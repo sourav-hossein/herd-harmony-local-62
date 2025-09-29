@@ -1,5 +1,5 @@
 
-interface HealthSuggestion {
+export interface HealthSuggestion {
   condition: string;
   symptoms: string[];
   recommendation: string;

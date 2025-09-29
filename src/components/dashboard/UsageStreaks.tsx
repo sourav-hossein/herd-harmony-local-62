@@ -30,7 +30,7 @@ export function UsageStreaks({ className }: UsageStreaksProps) {
   const updateActivityForToday = () => {
     const today = new Date().toDateString();
     const storedData = localStorage.getItem('usage-streak');
-    let data = storedData ? JSON.parse(storedData) : { current: 0, total: 0, lastActivity: null };
+    const data = storedData ? JSON.parse(storedData) : { current: 0, total: 0, lastActivity: null };
 
     const lastActivityDate = data.lastActivity ? new Date(data.lastActivity).toDateString() : null;
     

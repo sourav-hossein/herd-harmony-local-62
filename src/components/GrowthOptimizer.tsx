@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGoatContext } from '@/context/GoatContext';
 import { Goat, WeightRecord, BreedStandard, GrowthPerformance, GrowthAnalytics } from '@/types/goat';
 
-interface GrowthOptimizerProps {
-  // Add any props if needed
-}
+
 
 const BREED_STANDARDS: Record<string, BreedStandard> = {
   boer: {
@@ -75,29 +73,49 @@ export default function GrowthOptimizer() {
   const [growthPerformance, setGrowthPerformance] = useState<GrowthPerformance | null>(null);
   const [breedStandard, setBreedStandard] = useState<BreedStandard>(BREED_STANDARDS.boer);
 
-  useEffect(() => {
-    if (selectedGoat) {
-      const latestWeight = weightRecords
-        .filter(record => record.goatId === selectedGoat.id)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const getRecommendations = useCallback((score: number, goat: Goat): string[] => {
+    const recommendations: string[] = [];
 
-      const performance = calculateGPS(selectedGoat, latestWeight);
-      setGrowthPerformance(performance);
+    if (score < 70) {
+      recommendations.push('Consult with a veterinarian or nutritionist.');
+      recommendations.push("Review the goat's diet and feeding schedule.");
+      recommendations.push('Check for signs of illness or parasites.');
+    } else if (score < 90) {
+      recommendations.push('Monitor weight gain closely.');
+      recommendations.push('Adjust feed as necessary to meet growth targets.');
+    } else if (score > 110) {
+      recommendations.push('Ensure the goat is not being overfed.');
+      recommendations.push('Monitor for any signs of obesity-related health issues.');
     } else {
-      setGrowthPerformance(null);
+      recommendations.push('Continue current feeding and management practices.');
     }
-  }, [selectedGoat, weightRecords]);
 
-  const handleGoatSelect = (goatId: string) => {
-    const goat = goats.find(g => g.id === goatId);
-    setSelectedGoat(goat || null);
-  };
+    return recommendations;
+  }, []);
 
-  const handleBreedStandardChange = (breedName: string) => {
-    setBreedStandard(BREED_STANDARDS[breedName.toLowerCase()] || BREED_STANDARDS.boer);
-  };
+  const getExpectedWeight = useCallback((breedStandard: BreedStandard, ageInMonths: number): number => {
+    const milestones = breedStandard.milestones.sort((a, b) => a.ageMonths - b.ageMonths);
+    
+    // Find the closest milestone or interpolate
+    const exactMatch = milestones.find(m => m.ageMonths === ageInMonths);
+    if (exactMatch) return exactMatch.expectedWeight;
+    
+    // Interpolate between two milestones
+    const nextMilestone = milestones.find(m => m.ageMonths > ageInMonths);
+    const prevMilestone = milestones.slice().reverse().find(m => m.ageMonths < ageInMonths);
+    
+    if (nextMilestone && prevMilestone) {
+      const ratio = (ageInMonths - prevMilestone.ageMonths) / (nextMilestone.ageMonths - prevMilestone.ageMonths);
+      return prevMilestone.expectedWeight + (nextMilestone.expectedWeight - prevMilestone.expectedWeight) * ratio;
+    }
+    
+    if (prevMilestone) return prevMilestone.expectedWeight;
+    if (nextMilestone) return nextMilestone.expectedWeight;
+    
+    return 0;
+  }, []);
 
-  const calculateGPS = (goat: Goat, latestWeight: WeightRecord | undefined): GrowthPerformance => {
+  const calculateGPS = useCallback((goat: Goat, latestWeight: WeightRecord | undefined): GrowthPerformance => {
     if (!latestWeight) {
       return {
         goatId: goat.id,
@@ -134,48 +152,28 @@ export default function GrowthOptimizer() {
       lastCalculated: new Date(),
       recommendations,
     };
-  };
+  }, [getExpectedWeight, getRecommendations]);
 
-  const getRecommendations = (score: number, goat: Goat): string[] => {
-    const recommendations: string[] = [];
+  useEffect(() => {
+    if (selectedGoat) {
+      const latestWeight = weightRecords
+        .filter(record => record.goatId === selectedGoat.id)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
-    if (score < 70) {
-      recommendations.push('Consult with a veterinarian or nutritionist.');
-      recommendations.push('Review the goat\'s diet and feeding schedule.');
-      recommendations.push('Check for signs of illness or parasites.');
-    } else if (score < 90) {
-      recommendations.push('Monitor weight gain closely.');
-      recommendations.push('Adjust feed as necessary to meet growth targets.');
-    } else if (score > 110) {
-      recommendations.push('Ensure the goat is not being overfed.');
-      recommendations.push('Monitor for any signs of obesity-related health issues.');
+      const performance = calculateGPS(selectedGoat, latestWeight);
+      setGrowthPerformance(performance);
     } else {
-      recommendations.push('Continue current feeding and management practices.');
+      setGrowthPerformance(null);
     }
+  }, [selectedGoat, weightRecords, calculateGPS]);
 
-    return recommendations;
+  const handleGoatSelect = (goatId: string) => {
+    const goat = goats.find(g => g.id === goatId);
+    setSelectedGoat(goat || null);
   };
 
-  const getExpectedWeight = (breedStandard: BreedStandard, ageInMonths: number): number => {
-    const milestones = breedStandard.milestones.sort((a, b) => a.ageMonths - b.ageMonths);
-    
-    // Find the closest milestone or interpolate
-    const exactMatch = milestones.find(m => m.ageMonths === ageInMonths);
-    if (exactMatch) return exactMatch.expectedWeight;
-    
-    // Interpolate between two milestones
-    const nextMilestone = milestones.find(m => m.ageMonths > ageInMonths);
-    const prevMilestone = milestones.slice().reverse().find(m => m.ageMonths < ageInMonths);
-    
-    if (nextMilestone && prevMilestone) {
-      const ratio = (ageInMonths - prevMilestone.ageMonths) / (nextMilestone.ageMonths - prevMilestone.ageMonths);
-      return prevMilestone.expectedWeight + (nextMilestone.expectedWeight - prevMilestone.expectedWeight) * ratio;
-    }
-    
-    if (prevMilestone) return prevMilestone.expectedWeight;
-    if (nextMilestone) return nextMilestone.expectedWeight;
-    
-    return 0;
+  const handleBreedStandardChange = (breedName: string) => {
+    setBreedStandard(BREED_STANDARDS[breedName.toLowerCase()] || BREED_STANDARDS.boer);
   };
 
   return (

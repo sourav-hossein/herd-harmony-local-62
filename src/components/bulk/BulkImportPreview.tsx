@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { BulkValidationError } from '@/services/bulkService';
 
-interface BulkImportPreviewProps {
-  data: any[];
+interface BulkImportPreviewProps<T> {
+  data: T[];
   type: string;
   errors: BulkValidationError[];
   onConfirm: () => void;
@@ -22,14 +22,14 @@ interface BulkImportPreviewProps {
   isProcessing: boolean;
 }
 
-export function BulkImportPreview({ 
+export function BulkImportPreview<T extends Record<string, unknown>>({ 
   data, 
   type, 
   errors, 
   onConfirm, 
   onCancel, 
   isProcessing 
-}: BulkImportPreviewProps) {
+}: BulkImportPreviewProps<T>) {
   const errorRows = errors.filter(e => e.message !== e.message.includes('will default'));
   const warningRows = errors.filter(e => e.message.includes('will default') || e.message.includes('warning'));
   const canImport = errorRows.length === 0;
@@ -128,7 +128,7 @@ export function BulkImportPreview({
                 <tbody>
                   {data.slice(0, 3).map((row, index) => (
                     <tr key={index} className="border-b">
-                      {Object.values(row).map((value: any, cellIndex) => (
+                      {Object.values(row).map((value: unknown, cellIndex) => (
                         <td key={cellIndex} className="p-1">
                           {String(value || '').substring(0, 20)}
                         </td>

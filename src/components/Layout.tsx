@@ -21,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Wifi,
-  WifiOff
+  WifiOff,
+  Palette
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useFarm } from '@/context/FarmContext';
@@ -29,8 +30,12 @@ import FarmSwitcher from './multifarm/FarmSwitcher';
 import FarmSelector from './multifarm/FarmSelector';
 import { Separator } from '@/components/ui/separator';
 import { useFacilities } from '@/context/FacilitiesContext';
+import { useGoatContext } from '@/context/GoatContext';
 import { Badge } from '@/components/ui/badge';
 import { FarmMeta } from '@/types/farm';
+import { ModeToggle } from './ModeToggle';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { AccentColorPicker } from './AccentColorPicker';
 
 interface LayoutProps {
   children: ReactNode;
@@ -49,15 +54,16 @@ const navigationItems = [
   { id: 'finance', label: 'Finance', icon: DollarSign, priority: 2 },
   { id: 'sheds', label: 'Facilities', icon: Database, priority: 2 },
   { id: 'pastures', label: 'Pastures', icon: MapPin, priority: 2 },
-  { id: 'health', label: 'Health Records', icon: Heart, priority: 2 },
   { id: 'weather', label: 'Weather', icon: CloudSun, priority: 3 },
   { id: 'growth-optimizer', label: 'Growth', icon: TrendingUp, priority: 3 },
   { id: 'settings', label: 'Settings', icon: Settings, priority: 3 },
+  { id: 'ai', label: 'Farm Advisor', icon: Shield, priority: 1 },
 ];
 
 export function Layout({ children, activeSection, onSectionChange }: LayoutProps) {
   const { theme } = useTheme();
   const { sheds, pastures } = useFacilities();
+  const { getFarmStats, importData } = useGoatContext();
   const { 
     activeFarmId, 
     farmData, 
@@ -68,16 +74,12 @@ export function Layout({ children, activeSection, onSectionChange }: LayoutProps
     isLoading,
     isMapAvailable 
   } = useFarm();
-  
-  console.log("Layout Rendered - Active Farm ID:", activeFarmId);
-  console.log("Farms:", farms);
-  console.log("Farm Data:", farmData);
-  console.log("Is Loading:", isLoading);
-  console.log("Is Map Available:", isMapAvailable);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const currentFarm = farms.find(f => f.id === activeFarmId);
+  const farmStats = getFarmStats ? getFarmStats() : null;
 
   // Handle network status
   React.useEffect(() => {
@@ -130,19 +132,25 @@ export function Layout({ children, activeSection, onSectionChange }: LayoutProps
     if (!activeFarmId) return;
     
     try {
-      // TODO: Implement actual backup export
-      toast({
-        title: "Backup Export Started",
-        description: "Your farm data backup is being prepared..."
-      });
-      
-      // Simulate backup process
-      setTimeout(() => {
-        toast({
-          title: "Backup Export Complete",
-          description: "Your backup has been saved successfully."
+      const result = await window.electronAPI.exportData();
+      if (result) {
+        const filePath = await window.electronAPI.showSaveDialog({
+          title: 'Save Farm Backup',
+          defaultPath: `farm-backup-${activeFarmId}-${new Date().toISOString().split('T')[0]}.json`,
+          filters: [
+            { name: 'JSON Files', extensions: ['json'] },
+            { name: 'All Files', extensions: ['*'] },
+          ],
         });
-      }, 2000);
+
+        if (filePath) {
+          await window.electronAPI.writeFile(filePath, JSON.stringify(result, null, 2));
+          toast({
+            title: "Backup Export Complete",
+            description: `Your backup has been saved to ${filePath}`,
+          });
+        }
+      }
     } catch (error) {
       toast({
         title: "Backup Export Failed",
@@ -154,11 +162,27 @@ export function Layout({ children, activeSection, onSectionChange }: LayoutProps
 
   const handleImportBackup = async () => {
     try {
-      // TODO: Implement actual backup import
-      toast({
-        title: "Import Backup",
-        description: "Please select a backup file to import."
+      const filePaths = await window.electronAPI.showOpenDialog({
+        title: 'Import Farm Backup',
+        properties: ['openFile'],
+        filters: [
+          { name: 'JSON Files', extensions: ['json'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
       });
+
+      if (filePaths && filePaths.length > 0) {
+        const filePath = filePaths[0];
+        const fileContent = await window.electronAPI.readFile(filePath);
+        if (fileContent) {
+          const data = JSON.parse(fileContent);
+          await importData(data);
+          toast({
+            title: "Backup Import Complete",
+            description: "Your backup has been imported successfully.",
+          });
+        }
+      }
     } catch (error) {
       toast({
         title: "Backup Import Failed",
@@ -211,11 +235,11 @@ export function Layout({ children, activeSection, onSectionChange }: LayoutProps
               <FarmSwitcher
                 currentFarm={currentFarm || null}
                 farms={farms}
-                farmStats={farmData ? {
-                  activeGoats: 0, // TODO: Get from actual goats data
+                farmStats={farmData && farmStats ? {
+                  activeGoats: farmStats.activeGoats,
                   totalSheds: sheds.length,
                   totalPastures: pastures.length,
-                  upcomingReminders: 0, // TODO: Calculate from health/breeding data
+                  upcomingReminders: farmStats.upcomingReminders,
                 } : undefined}
                 onSwitchFarm={(farm) => setActiveFarm(farm.id)}
                 onCreateFarm={handleCreateFarm}
@@ -328,18 +352,31 @@ export function Layout({ children, activeSection, onSectionChange }: LayoutProps
           </nav>
 
           {/* Footer */}
-          {!sidebarCollapsed && (
-            <div className="p-3 border-t">
-              <div className="text-xs text-muted-foreground text-center">
-                Herd Harmony v1.0
+          <div className="p-3 border-t">
+            {!sidebarCollapsed ? (
+              <div className="flex items-center justify-between">
+                <ModeToggle />
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Palette className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Accent Color</DialogTitle>
+                    </DialogHeader>
+                    <AccentColorPicker />
+                  </DialogContent>
+                </Dialog>
               </div>
-              {activeFarmId && (
-                <div className="text-xs text-muted-foreground text-center mt-1">
-                  {farms.length} farm{farms.length === 1 ? '' : 's'} managed
-                </div>
-              )}
+            ) : (
+              <ModeToggle />
+            )}
+            <div className="text-xs text-muted-foreground text-center mt-2">
+              Herd Harmony v1.0
             </div>
-          )}
+          </div>
         </div>
 
         {/* Main Content */}

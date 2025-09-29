@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Layout } from '@/components/Layout';
-import AllInOneDashboard from '@/components/dashboard/AllInOneDashboard';
+import EnhancedDashboard from '@/components/dashboard/EnhancedDashboard';
 import { FeedDashboard } from '@/components/feed/FeedDashboard';
 import FinanceDashboard from '@/components/finance/FinanceDashboard';
 import { HealthAI } from '@/components/HealthAI';
@@ -11,9 +11,10 @@ import { WeatherDashboard } from '@/components/weather/WeatherDashboard';
 import Settings from '@/components/settings/Settings';
 import { WeightTracking } from '@/components/weight/WeightTracking';
 import GoatManagement from '@/components/goats/GoatManagement';
-import PedigreeWrapper from '@/components/pedigree/PedigreeWrapper';
+import PedigreeAnalyzer from '@/components/pedigree/PedigreeAnalyzer';
 import PastureMap from '@/components/farms/pastures/PastureMap';
 import ShedList from '@/components/farms/sheds/ShedList';
+import FarmAdvisor from '@/components/ai/FarmAdvisor';
 
 export default function Index() {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -22,13 +23,13 @@ export default function Index() {
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <AllInOneDashboard />;
+        return <EnhancedDashboard />;
       case 'goats':
         return <GoatManagement />;
       case 'weight':
         return <WeightTracking />;
       case 'pedigree':
-        return <PedigreeWrapper />; 
+        return <PedigreeAnalyzer />; 
       case 'breeding':
         return <BreedingPlanner />;
       case 'finance':
@@ -47,8 +48,10 @@ export default function Index() {
         return <PastureMap/>
       case 'sheds':
         return <ShedList />;
+      case 'ai':
+        return < FarmAdvisor/>
       default:
-        return <AllInOneDashboard />;
+        return <EnhancedDashboard />;
     }
   };
 

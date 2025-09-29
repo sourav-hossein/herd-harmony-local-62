@@ -110,7 +110,6 @@ export function FarmProvider({ children }: FarmProviderProps) {
       await window.electronAPI!.setActiveFarmId(farmId);
       await window.electronAPI!.initializeFarmServices(farmId);
       setActiveFarmId(farmId);
-      localStorage.setItem('activeFarmId', farmId);
       await loadAllFarmData(farmId, currentFarms);
       
       const updatedFarms = currentFarms.map(farm => 
@@ -118,7 +117,7 @@ export function FarmProvider({ children }: FarmProviderProps) {
           ? { ...farm, lastOpenedAt: new Date().toISOString() }
           : farm
       );
-      setFarms(updatedFarms);
+      // setFarms(updatedFarms);
       
       const farmMeta = updatedFarms.find(f => f.id === farmId);
       if (farmMeta) {
@@ -173,7 +172,6 @@ export function FarmProvider({ children }: FarmProviderProps) {
       await window.electronAPI!.deleteFarm(farmId);
       if (activeFarmId === farmId) {
         setActiveFarmId(null);
-        localStorage.removeItem('activeFarmId');
         setFarmData(null);
         setIsMapAvailable(false);
       }
@@ -260,24 +258,14 @@ export function FarmProvider({ children }: FarmProviderProps) {
       try {
         const farmList = await window.electronAPI!.listFarms();
         setFarms(farmList);
-
-        if (farmList.length > 0) {
-          const lastActiveId = localStorage.getItem('activeFarmId');
-          let farmToActivate = farmList.find(f => f.id === lastActiveId);
-
-          if (!farmToActivate) {
-            const sortedFarms = [...farmList].sort((a, b) =>
-              new Date(b.lastOpenedAt || 0).getTime() - new Date(a.lastOpenedAt || 0).getTime()
-            );
-            farmToActivate = sortedFarms[0];
-          }
-
-          if (farmToActivate) {
-            await setActiveFarm(farmToActivate.id);
-          }
+        const activeId = await window.electronAPI!.getActiveFarmId();
+        if (activeId) {
+          await window.electronAPI!.initializeFarmServices(activeId);
+          setActiveFarmId(activeId);
+          await loadAllFarmData(activeId, farmList);
         }
       } catch (error) {
-        console.error('Failed to load farms:', error);
+        console.error('Failed to initialize farm context:', error);
       } finally {
         setIsLoading(false);
       }

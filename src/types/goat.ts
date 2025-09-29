@@ -30,7 +30,7 @@ export interface Goat {
   sex?: 'male' | 'female'; // Alias for compatibility
   castrated?: boolean;
   status: 'active' | 'sold' | 'deceased' | 'archived';
-  breedingStatus: '' | 'pregnant' | 'lactating' | 'resting' | 'kid' | 'active';
+  breedingStatus: '' | 'pregnant' | 'lactating' | 'resting' | 'kid' | 'active' | 'not_breeding';
   fatherId?: string;
   motherId?: string;
   color?: string;

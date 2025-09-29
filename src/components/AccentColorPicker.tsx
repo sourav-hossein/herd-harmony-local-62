@@ -9,31 +9,30 @@ import { Palette, Check } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 const presetColors = [
-  { name: 'Sage Green', value: 'sage', hsl: '120 25% 35%', preview: '#4a7c59' },
-  { name: 'Ocean Blue', value: 'blue', hsl: '221 83% 53%', preview: '#3b82f6' },
-  { name: 'Forest Green', value: 'green', hsl: '142 76% 36%', preview: '#16a34a' },
-  { name: 'Sunset Orange', value: 'orange', hsl: '25 95% 53%', preview: '#f97316' },
-  { name: 'Royal Purple', value: 'purple', hsl: '262 83% 58%', preview: '#8b5cf6' },
-  { name: 'Rose Pink', value: 'pink', hsl: '330 81% 60%', preview: '#ec4899' },
-  { name: 'Cherry Red', value: 'red', hsl: '0 84% 60%', preview: '#ef4444' },
-  { name: 'Golden Yellow', value: 'yellow', hsl: '48 96% 53%', preview: '#eab308' },
-  { name: 'Slate Gray', value: 'slate', hsl: '215 28% 17%', preview: '#334155' },
-  { name: 'Emerald', value: 'emerald', hsl: '160 84% 39%', preview: '#10b981' },
-  { name: 'Indigo', value: 'indigo', hsl: '239 84% 67%', preview: '#6366f1' },
-  { name: 'Teal', value: 'teal', hsl: '173 80% 40%', preview: '#14b8a6' }
+  { name: 'Sage Green', hsl: '120 25% 35%', value: '#4a7c59' },
+  { name: 'Ocean Blue',  hsl: '221 83% 53%', value: '#3b82f6' },
+  { name: 'Forest Green', hsl: '142 76% 36%', value: '#16a34a' },
+  { name: 'Sunset Orange',  hsl: '25 95% 53%', value: '#f97316' },
+  { name: 'Royal Purple',  hsl: '262 83% 58%', value: '#8b5cf6' },
+  { name: 'Rose Pink',  hsl: '330 81% 60%', value: '#ec4899' },
+  { name: 'Cherry Red',  hsl: '0 84% 60%', value: '#ef4444' },
+  { name: 'Golden Yellow',  hsl: '48 96% 53%', value: '#eab308' },
+  { name: 'Slate Gray',  hsl: '215 28% 17%', value: '#334155' },
+  { name: 'Emerald',  hsl: '160 84% 39%', value: '#10b981' },
+  { name: 'Indigo',  hsl: '239 84% 67%', value: '#6366f1' },
+  { name: 'Teal',  hsl: '173 80% 40%', value: '#14b8a6' }
 ];
 
 export function AccentColorPicker() {
-  const { accentColor, setAccentColor, customAccentColor, setCustomAccentColor } = useTheme();
+  const { accentColor, setAccentColor } = useTheme();
   const [showCustomPicker, setShowCustomPicker] = React.useState(false);
 
   const handleCustomColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const hexColor = event.target.value;
-    setCustomAccentColor(hexColor);
+    setAccentColor(hexColor);
     
     // Convert hex to HSL and apply
     const hsl = hexToHsl(hexColor);
-    setAccentColor('custom');
   };
 
   const hexToHsl = (hex: string): string => {
@@ -43,7 +42,8 @@ export function AccentColorPicker() {
 
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
+    const l = (max + min) / 2;
+    let h = 0, s = 0;
 
     if (max !== min) {
       const d = max - min;
@@ -78,13 +78,13 @@ export function AccentColorPicker() {
                 key={color.value}
                 variant="ghost"
                 className="h-12 p-1 relative group"
-                onClick={() => setAccentColor(color.value as any)}
+                onClick={() => setAccentColor(color.value )}
                 title={color.name}
               >
                 <div
                   className="w-full h-full rounded-md border-2 transition-all"
                   style={{
-                    backgroundColor: color.preview,
+                    backgroundColor: color.value,
                     borderColor: accentColor === color.value ? 'hsl(var(--foreground))' : 'transparent'
                   }}
                 >
@@ -118,35 +118,25 @@ export function AccentColorPicker() {
               <div className="flex items-center space-x-3">
                 <Input
                   type="color"
-                  value={customAccentColor}
+                  value={accentColor}
                   onChange={handleCustomColorChange}
                   className="w-12 h-10 p-1 border rounded cursor-pointer"
                 />
                 <Input
                   type="text"
-                  value={customAccentColor}
-                  onChange={(e) => setCustomAccentColor(e.target.value)}
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
                   placeholder="#3b82f6"
                   className="font-mono text-sm"
                 />
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    const hsl = hexToHsl(customAccentColor);
-                    setAccentColor('custom');
-                  }}
-                  disabled={!customAccentColor.match(/^#[0-9A-F]{6}$/i)}
-                >
-                  Apply
-                </Button>
               </div>
               
               <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                 <div
                   className="w-4 h-4 rounded border"
-                  style={{ backgroundColor: customAccentColor }}
+                  style={{ backgroundColor: accentColor }}
                 />
-                <span>Preview: {customAccentColor}</span>
+                <span>Preview: {accentColor}</span>
               </div>
             </div>
           )}
@@ -157,7 +147,7 @@ export function AccentColorPicker() {
           <h4 className="text-sm font-medium mb-1">Current Selection</h4>
           <p className="text-sm text-muted-foreground">
             {accentColor === 'custom' 
-              ? `Custom: ${customAccentColor}` 
+              ? `Custom: ${accentColor}` 
               : presetColors.find(c => c.value === accentColor)?.name || 'Unknown'
             }
           </p>

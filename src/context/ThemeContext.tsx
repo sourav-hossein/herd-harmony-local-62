@@ -1,48 +1,21 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useFarm } from './FarmContext';
 
 type Theme = 'dark' | 'light' | 'system';
 
-type AccentColor = 
-  | 'sage' 
-  | 'blue' 
-  | 'green' 
-  | 'orange' 
-  | 'purple' 
-  | 'pink' 
-  | 'red' 
-  | 'yellow'
-  | 'slate'
-  | 'emerald'
-  | 'indigo'
-  | 'teal'
-  | 'custom';
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  accentColor: AccentColor;
-  setAccentColor: (color: AccentColor) => void;
-  customAccentColor: string;
-  setCustomAccentColor: (color: string) => void;
+  accentColor: string;
+  setAccentColor: (color: string) => void;
+
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const accentColorMap: Record<Exclude<AccentColor, 'custom'>, string> = {
-  sage: '120 25% 35%',
-  blue: '221 83% 53%',
-  green: '142 76% 36%',
-  orange: '25 95% 53%',
-  purple: '262 83% 58%',
-  pink: '330 81% 60%',
-  red: '0 84% 60%',
-  yellow: '48 96% 53%',
-  slate: '215 28% 17%',
-  emerald: '160 84% 39%',
-  indigo: '239 84% 67%',
-  teal: '173 80% 40%'
-};
+
 
 const generateColorVariants = (hsl: string) => {
   const [h, s, lRaw] = hsl.split(' ');
@@ -86,6 +59,7 @@ const hexToHsl = (hex: string): string => {
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const {farmData}= useFarm()
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('theme') as Theme) || 'system';
@@ -93,16 +67,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return 'system';
   });
 
-  const [accentColor, setAccentColor] = useState<AccentColor>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('accent-color') as AccentColor) || 'sage';
-    }
-    return 'sage';
-  });
 
-  const [customAccentColor, setCustomAccentColor] = useState<string>(() => {
+
+  const [accentColor, setAccentColor] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('custom-accent-color') || '#3b82f6';
+      return farmData?.metadata?.color||localStorage.getItem('accent-color') || '#3b82f6';
     }
     return '#3b82f6';
   });
@@ -122,9 +91,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Generate accent color variants
-    const baseHsl = accentColor === 'custom' 
-      ? hexToHsl(customAccentColor)
-      : accentColorMap[accentColor];
+    const baseHsl = hexToHsl(accentColor)
+      
     
     const colors = generateColorVariants(baseHsl);
 
@@ -171,8 +139,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Persist settings
     localStorage.setItem("theme", theme);
     localStorage.setItem("accent-color", accentColor);
-    localStorage.setItem("custom-accent-color", customAccentColor);
-  }, [theme, accentColor, customAccentColor]);
+  }, [theme, accentColor, accentColor]);
 
   // Listen for system theme changes
   useEffect(() => {
@@ -194,9 +161,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       theme, 
       setTheme, 
       accentColor, 
-      setAccentColor,
-      customAccentColor,
-      setCustomAccentColor
+      setAccentColor
     }}>
       {children}
     </ThemeContext.Provider>

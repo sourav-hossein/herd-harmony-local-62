@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -19,6 +19,34 @@ import { BreedingAdvisor } from '@/lib/breedingAdvisor';
 import { GeneticPredictor } from '@/lib/predictGenetics';
 import { GeneticsService } from '@/lib/genetics';
 
+interface InbreedingAnalysis {
+  coefficient: number;
+  risk: 'none' | 'low' | 'moderate' | 'high' | 'extreme';
+}
+
+interface HornProbability {
+  phenotype: string;
+  genotype: string;
+  probability: number;
+}
+
+interface TraitAverage {
+  trait: string;
+  value: string;
+}
+
+interface GeneticPredictions {
+  confidence: number;
+  hornProbabilities: HornProbability[];
+  traitAverages: TraitAverage[];
+}
+
+interface Recommendation {
+  recommendedMateId: string;
+  reason: string;
+  confidenceScore: number;
+}
+
 interface BreedingAdvisorPanelProps {
   selectedBuck: Goat | null;
   selectedDoe: Goat | null;
@@ -33,50 +61,40 @@ const BreedingAdvisorPanel: React.FC<BreedingAdvisorPanelProps> = ({
   onMateRecommendation
 }) => {
   const [analysis, setAnalysis] = useState<{
-    inbreeding: any;
-    predictions: any;
+    inbreeding: InbreedingAnalysis;
+    predictions: GeneticPredictions;
     breedingValue: number;
-    recommendations: any[];
+    recommendations: Recommendation[];
     warnings: string[];
   } | null>(null);
 
-  useEffect(() => {
-    if (selectedBuck && selectedDoe) {
-      analyzeBreeding();
-    } else {
-      setAnalysis(null);
+  const generateWarnings = useCallback((buck: Goat, doe: Goat, inbreeding: InbreedingAnalysis): string[] => {
+    const warnings: string[] = [];
+    
+    if (inbreeding.risk === 'high' || inbreeding.risk === 'extreme') {
+      warnings.push(`High inbreeding risk (${(inbreeding.coefficient * 100).toFixed(1)}%)`);
     }
-  }, [selectedBuck, selectedDoe, allGoats]);
-
-  const analyzeBreeding = () => {
-    if (!selectedBuck || !selectedDoe) return;
-
-    // Inbreeding analysis
-    const inbreeding = BreedingAdvisor.calculateInbreeding(selectedBuck, selectedDoe, allGoats);
     
-    // Genetic predictions
-    const predictions = GeneticPredictor.generateBreedingPredictions(selectedBuck, selectedDoe);
+    if (buck.status !== 'active') {
+      warnings.push(`Buck ${buck.name} is not active`);
+    }
     
-    // Calculate breeding value score
-    const breedingValue = calculateBreedingValueScore(selectedBuck, selectedDoe, inbreeding);
+    if (doe.status !== 'active') {
+      warnings.push(`Doe ${doe.name} is not active`);
+    }
     
-    // Get alternative recommendations if current pairing has issues
-    const recommendations = selectedDoe ? 
-      BreedingAdvisor.recommendMates(selectedDoe, allGoats.filter(g => g.gender === 'male'), allGoats) : [];
+    const buckAge = new Date().getFullYear() - new Date(buck.birthDate).getFullYear();
+    const doeAge = new Date().getFullYear() - new Date(doe.birthDate).getFullYear();
     
-    // Generate warnings
-    const warnings = generateWarnings(selectedBuck, selectedDoe, inbreeding);
+    if (buckAge < 1) warnings.push('Buck may be too young for breeding');
+    if (doeAge < 1) warnings.push('Doe may be too young for breeding');
+    if (buckAge > 10) warnings.push('Buck may be past prime breeding age');
+    if (doeAge > 8) warnings.push('Doe may be past prime breeding age');
+    
+    return warnings;
+  }, []);
 
-    setAnalysis({
-      inbreeding,
-      predictions,
-      breedingValue,
-      recommendations: recommendations.slice(0, 3), // Top 3
-      warnings
-    });
-  };
-
-  const calculateBreedingValueScore = (buck: Goat, doe: Goat, inbreeding: any): number => {
+  const calculateBreedingValueScore = useCallback((buck: Goat, doe: Goat, inbreeding: InbreedingAnalysis): number => {
     const buckGenetics = buck.genetics || {
       fertilityScore: 5,
       milkYieldGenetics: 100
@@ -105,33 +123,43 @@ const BreedingAdvisorPanel: React.FC<BreedingAdvisorPanelProps> = ({
     const finalScore = Math.max(0, rawScore - (healthPenalty + inbreedingPenalty + agePenalty) * 100);
     
     return Math.round(finalScore);
-  };
+  }, []);
 
-  const generateWarnings = (buck: Goat, doe: Goat, inbreeding: any): string[] => {
-    const warnings: string[] = [];
+  const analyzeBreeding = useCallback(() => {
+    if (!selectedBuck || !selectedDoe) return;
+
+    // Inbreeding analysis
+    const inbreeding = BreedingAdvisor.calculateInbreeding(selectedBuck, selectedDoe, allGoats);
     
-    if (inbreeding.risk === 'high' || inbreeding.risk === 'extreme') {
-      warnings.push(`High inbreeding risk (${(inbreeding.coefficient * 100).toFixed(1)}%)`);
+    // Genetic predictions
+    const predictions = GeneticPredictor.generateBreedingPredictions(selectedBuck, selectedDoe);
+    
+    // Calculate breeding value score
+    const breedingValue = calculateBreedingValueScore(selectedBuck, selectedDoe, inbreeding);
+    
+    // Get alternative recommendations if current pairing has issues
+    const recommendations = selectedDoe ? 
+      BreedingAdvisor.recommendMates(selectedDoe, allGoats.filter(g => g.gender === 'male'), allGoats) : [];
+    
+    // Generate warnings
+    const warnings = generateWarnings(selectedBuck, selectedDoe, inbreeding);
+
+    setAnalysis({
+      inbreeding,
+      predictions,
+      breedingValue,
+      recommendations: recommendations.slice(0, 3), // Top 3
+      warnings
+    });
+  }, [selectedBuck, selectedDoe, allGoats, calculateBreedingValueScore, generateWarnings]);
+
+  useEffect(() => {
+    if (selectedBuck && selectedDoe) {
+      analyzeBreeding();
+    } else {
+      setAnalysis(null);
     }
-    
-    if (buck.status !== 'active') {
-      warnings.push(`Buck ${buck.name} is not active`);
-    }
-    
-    if (doe.status !== 'active') {
-      warnings.push(`Doe ${doe.name} is not active`);
-    }
-    
-    const buckAge = new Date().getFullYear() - new Date(buck.birthDate).getFullYear();
-    const doeAge = new Date().getFullYear() - new Date(doe.birthDate).getFullYear();
-    
-    if (buckAge < 1) warnings.push('Buck may be too young for breeding');
-    if (doeAge < 1) warnings.push('Doe may be too young for breeding');
-    if (buckAge > 10) warnings.push('Buck may be past prime breeding age');
-    if (doeAge > 8) warnings.push('Doe may be past prime breeding age');
-    
-    return warnings;
-  };
+  }, [selectedBuck, selectedDoe, analyzeBreeding]);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -249,7 +277,7 @@ const BreedingAdvisorPanel: React.FC<BreedingAdvisorPanelProps> = ({
           <div>
             <h4 className="font-medium mb-2">Horn Status Probabilities</h4>
             <div className="space-y-2">
-              {analysis.predictions.hornProbabilities.map((prob: any, index: number) => (
+              {analysis.predictions.hornProbabilities.map((prob: HornProbability, index: number) => (
                 <div key={index} className="flex items-center justify-between">
                   <span className="text-sm">{prob.phenotype} ({prob.genotype})</span>
                   <div className="flex items-center space-x-2">
@@ -267,7 +295,7 @@ const BreedingAdvisorPanel: React.FC<BreedingAdvisorPanelProps> = ({
           <div>
             <h4 className="font-medium mb-2">Expected Trait Averages</h4>
             <div className="grid grid-cols-1 gap-2">
-              {analysis.predictions.traitAverages.map((trait: any, index: number) => (
+              {analysis.predictions.traitAverages.map((trait: TraitAverage, index: number) => (
                 <div key={index} className="flex justify-between">
                   <span className="text-sm">{trait.trait}:</span>
                   <span className="text-sm font-medium">{trait.value}</span>
@@ -289,7 +317,7 @@ const BreedingAdvisorPanel: React.FC<BreedingAdvisorPanelProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analysis.recommendations.map((rec: any, index: number) => {
+              {analysis.recommendations.map((rec: Recommendation, index: number) => {
                 const partner = allGoats.find(g => g.id === rec.recommendedMateId);
                 if (!partner) return null;
                 

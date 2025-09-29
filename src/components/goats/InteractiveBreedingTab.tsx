@@ -15,8 +15,8 @@ interface InteractiveBreedingTabProps {
   goat: Goat;
   breedingRecords: BreedingRecord[];
   allGoats: Goat[];
-  onAddBreeding?: (data: any) => void;
-  onUpdateBreeding?: (recordId: string, data: any) => void;
+  onAddBreeding?: (data: Partial<BreedingRecord>) => void;
+  onUpdateBreeding?: (recordId: string, data: Partial<BreedingRecord>) => void;
   onDeleteBreeding?: (recordId: string) => void;
 }
 

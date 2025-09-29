@@ -35,7 +35,7 @@ interface MasterEntryProps {
 export function MasterEntry({ onClose }: MasterEntryProps) {
   const [activeTab, setActiveTab] = useState('goats');
   const [isImporting, setIsImporting] = useState(false);
-  const [importData, setImportData] = useState<any[] | null>(null);
+  const [importData, setImportData] = useState<Record<string, unknown>[] | null>(null);
   const [importType, setImportType] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<BulkValidationError[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -233,7 +233,7 @@ export function MasterEntry({ onClose }: MasterEntryProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDownloadTemplate(activeTab as any, 'excel')}
+                  onClick={() => handleDownloadTemplate(activeTab as 'goats' | 'weight' | 'health' | 'finance', 'excel')}
                   className="flex items-center gap-2"
                 >
                   <FileSpreadsheet className="h-4 w-4" />
@@ -242,7 +242,7 @@ export function MasterEntry({ onClose }: MasterEntryProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDownloadTemplate(activeTab as any, 'csv')}
+                  onClick={() => handleDownloadTemplate(activeTab as 'goats' | 'weight' | 'health' | 'finance', 'csv')}
                   className="flex items-center gap-2"
                 >
                   <FileText className="h-4 w-4" />

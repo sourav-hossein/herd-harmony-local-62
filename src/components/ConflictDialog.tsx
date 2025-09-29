@@ -10,10 +10,16 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+interface Conflict {
+  id: string;
+  local: Record<string, unknown>;
+  remote: Record<string, unknown>;
+}
+
 interface ConflictDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  conflicts: any[]; // Should be properly typed based on your data structure
+  conflicts: Conflict[];
   onResolve: (resolution: 'local' | 'remote' | 'merge') => void;
 }
 

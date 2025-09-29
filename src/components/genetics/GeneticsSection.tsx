@@ -26,7 +26,10 @@ const GeneticsSection: React.FC<GeneticsSectionProps> = ({
   showPredictions = false,
   predictions
 }) => {
-  const updateGenetics = (field: keyof NonNullable<Goat['genetics']>, value: any) => {
+  const updateGenetics = <K extends keyof NonNullable<Goat['genetics']>>(
+    field: K,
+    value: NonNullable<Goat['genetics']>[K]
+  ) => {
     onGeneticsChange({
       ...genetics,
       [field]: value

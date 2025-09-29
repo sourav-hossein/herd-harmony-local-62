@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,14 +57,7 @@ export function LocalBackupManager() {
 
   const isElectron = window.electronAPI?.isElectron;
 
-  useEffect(() => {
-    if (isElectron) {
-      loadBackupFiles();
-      loadSettings();
-    }
-  }, [isElectron]);
-
-  const loadBackupFiles = async () => {
+  const loadBackupFiles = useCallback(async () => {
     if (!isElectron) return;
     
     try {
@@ -73,9 +66,9 @@ export function LocalBackupManager() {
     } catch (error) {
       console.error('Error loading backup files:', error);
     }
-  };
+  }, [isElectron]);
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     if (!isElectron) return;
     
     try {
@@ -84,7 +77,14 @@ export function LocalBackupManager() {
     } catch (error) {
       console.error('Error loading backup settings:', error);
     }
-  };
+  }, [isElectron]);
+
+  useEffect(() => {
+    if (isElectron) {
+      loadBackupFiles();
+      loadSettings();
+    }
+  }, [isElectron, loadBackupFiles, loadSettings]);
 
   const saveSettings = async () => {
     if (!isElectron) return;

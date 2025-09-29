@@ -21,7 +21,7 @@ import {
   Trash
 } from 'lucide-react';
 import { Goat, HealthRecord } from '@/types/goat';
-import { healthAI } from '@/lib/healthAI';
+import { healthAI, HealthSuggestion } from '@/lib/healthAI';
 import { useToast } from '@/hooks/use-toast';
 
 interface InteractiveHealthTabProps {
@@ -55,7 +55,7 @@ export function InteractiveHealthTab({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<HealthRecord | null>(null);
   const [symptomInput, setSymptomInput] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [aiSuggestions, setAiSuggestions] = useState<HealthSuggestion[]>([]);
   const [formData, setFormData] = useState<HealthFormData>({
     date: new Date().toISOString().split('T')[0],
     type: '',
@@ -98,11 +98,11 @@ export function InteractiveHealthTab({
     const record = {
       goatId: goat.id,
       date: new Date(formData.date),
-      type: formData.type as any,
+      type: formData.type as HealthRecord['type'],
       description: formData.description,
       medicine: formData.medicine || undefined,
       veterinarian: formData.veterinarian || undefined,
-      status: formData.status as any || 'completed',
+      status: formData.status as HealthRecord['status'] || 'completed',
       nextDueDate: formData.nextDueDate ? new Date(formData.nextDueDate) : undefined,
       notes: formData.notes || undefined
     };

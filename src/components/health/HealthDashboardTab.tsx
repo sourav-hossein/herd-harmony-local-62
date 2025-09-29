@@ -16,6 +16,14 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { healthAI } from '@/lib/healthAI';
+import { HealthRecord } from '@/types/goat';
+
+interface AIInsight {
+  type: 'warning' | 'alert' | 'info';
+  title: string;
+  message: string;
+  action: string;
+}
 
 interface HealthDashboardTabProps {
   healthStats: {
@@ -32,9 +40,9 @@ interface HealthDashboardTabProps {
 
 export function HealthDashboardTab({ healthStats }: HealthDashboardTabProps) {
   const { goats, healthRecords, getUpcomingHealthReminders } = useGoatContext();
-  const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
-  const [overdueTasks, setOverdueTasks] = useState<any[]>([]);
-  const [aiInsights, setAiInsights] = useState<any[]>([]);
+  const [upcomingTasks, setUpcomingTasks] = useState<HealthRecord[]>([]);
+  const [overdueTasks, setOverdueTasks] = useState<HealthRecord[]>([]);
+  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
 
   useEffect(() => {
     const loadDashboardData = () => {

@@ -121,7 +121,7 @@ export function SmartSuggestions({ alerts, dataIssues = [], onSuggestionClick, m
 
   const suggestions = generateSuggestions();
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string): 'destructive' | 'default' | 'secondary' | 'outline' => {
     switch (priority) {
       case 'high': return 'destructive';
       case 'medium': return 'default';
@@ -187,7 +187,7 @@ export function SmartSuggestions({ alerts, dataIssues = [], onSuggestionClick, m
                       {suggestion.description}
                     </p>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={getPriorityColor(suggestion.priority) as any} className="text-xs">
+                      <Badge variant={getPriorityColor(suggestion.priority)} className="text-xs">
                         {suggestion.priority}
                       </Badge>
                       <Badge variant="outline" className="text-xs">

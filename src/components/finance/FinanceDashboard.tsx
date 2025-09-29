@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,29 +74,7 @@ export default function FinanceDashboard() {
 
   const { goats } = useGoatData();
 
-  useEffect(() => {
-    loadFinanceData();
-  }, [deleteFinanceRecord, updateFinanceRecord, addFinanceRecord]);
-
-  const loadFinanceData = async () => {
-    setLoading(true);
-    try {
-      // This would be replaced with actual API calls
-   
-      
-      const calculatedStats = calculateStats(financeRecords);
-      setStats(calculatedStats);
-
-      const profitability = calculateGoatProfitability(financeRecords);
-      setGoatProfitability(profitability);
-    } catch (error) {
-      console.error('Error loading finance data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateStats = (records: FinanceRecord[]): FinanceStats => {
+  const calculateStats = useCallback((records: FinanceRecord[]): FinanceStats => {
     const totalIncome = records
       .filter(r => r.type === 'income')
       .reduce((sum, r) => sum + r.amount, 0);
@@ -157,9 +135,9 @@ export default function FinanceDashboard() {
       topIncomeCategories,
       monthlyTrends
     };
-  };
+  }, []);
 
-  const calculateGoatProfitability = (records: FinanceRecord[]): GoatProfitability[] => {
+  const calculateGoatProfitability = useCallback((records: FinanceRecord[]): GoatProfitability[] => {
     const goatData: { [key: string]: { costs: number; revenue: number } } = {};
     
     records.forEach(record => {
@@ -190,7 +168,26 @@ export default function FinanceDashboard() {
         profitMargin
       };
     }).sort((a, b) => b.netProfit - a.netProfit);
-  };
+  }, [goats]);
+
+  const loadFinanceData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const calculatedStats = calculateStats(financeRecords);
+      setStats(calculatedStats);
+
+      const profitability = calculateGoatProfitability(financeRecords);
+      setGoatProfitability(profitability);
+    } catch (error) {
+      console.error('Error loading finance data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [financeRecords, calculateStats, calculateGoatProfitability]);
+
+  useEffect(() => {
+    loadFinanceData();
+  }, [loadFinanceData]);
   
   const insights = stats ? FinanceAI.generateInsights(financeRecords, stats) : [];
 

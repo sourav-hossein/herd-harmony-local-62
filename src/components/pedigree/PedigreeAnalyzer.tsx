@@ -15,7 +15,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Dna, GitMerge } from 'lucide-react';
+import { Dna, GitMerge, Library } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import FullPedigreeTree from './FullPedigreeTree';
+import { Button } from '../ui/button';
 
 const nodeTypes = { default: GoatNode };
 
@@ -23,7 +26,7 @@ interface PedigreeAnalyzerProps {
   initialGoatId?: string;
 }
 
-const EditorToolbar: React.FC<any> = ({ goats, rootGoatId, setRootGoatId, viewType, setViewType, isPlanning, setIsPlanning, initialGoatId }) => (
+const EditorToolbar: React.FC<any> = ({ goats, rootGoatId, setRootGoatId, viewType, setViewType, isPlanning, setIsPlanning, initialGoatId, onOpenFullPedigree }) => (
   <motion.div 
     className="p-3 border-b bg-card flex items-center justify-between space-x-4"
     initial={{ y: -60, opacity: 0 }}
@@ -51,6 +54,10 @@ const EditorToolbar: React.FC<any> = ({ goats, rootGoatId, setRootGoatId, viewTy
           </SelectContent>
         </Select>
       </div>
+      <Button onClick={onOpenFullPedigree} variant="outline">
+        <Library className="h-4 w-4 mr-2" />
+        View Full Lineage
+      </Button>
     </div>
     <div className="flex items-center space-x-3">
       <Label htmlFor="planning-mode">Breeding Planner</Label>
@@ -89,6 +96,7 @@ const PedigreeAnalyzer: React.FC<PedigreeAnalyzerProps> = ({ initialGoatId }) =>
   const pedigreePaneRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
   const [profileGoat, setProfileGoat] = useState<Goat | null>(null);
+  const [isFullPedigreeOpen, setFullPedigreeOpen] = useState(false);
 
   useEffect(() => {
     if (rootGoatId) {
@@ -150,7 +158,7 @@ const PedigreeAnalyzer: React.FC<PedigreeAnalyzerProps> = ({ initialGoatId }) =>
 
   return (
     <div className="h-full w-full flex flex-col bg-card">
-      <EditorToolbar goats={goats} rootGoatId={rootGoatId} setRootGoatId={setRootGoatId} viewType={viewType} setViewType={setViewType} isPlanning={isPlanning} setIsPlanning={setIsPlanning} initialGoatId={initialGoatId} />
+      <EditorToolbar goats={goats} rootGoatId={rootGoatId} setRootGoatId={setRootGoatId} viewType={viewType} setViewType={setViewType} isPlanning={isPlanning} setIsPlanning={setIsPlanning} initialGoatId={initialGoatId} onOpenFullPedigree={() => setFullPedigreeOpen(true)} />
       <ResizablePanelGroup direction="horizontal" className="flex-grow">
         <ResizablePanel defaultSize={70}>
           <motion.div className="h-full w-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -194,6 +202,18 @@ const PedigreeAnalyzer: React.FC<PedigreeAnalyzerProps> = ({ initialGoatId }) =>
           onUpdateBreeding={updateBreedingRecord}
           onDeleteBreeding={deleteBreedingRecord}
         />
+      )}
+      {isFullPedigreeOpen && (
+        <Dialog open={isFullPedigreeOpen} onOpenChange={setFullPedigreeOpen}>
+          <DialogContent className="max-w-7xl h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Full Pedigree Lineage</DialogTitle>
+            </DialogHeader>
+            <div className="h-full w-full">
+              <FullPedigreeTree />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
