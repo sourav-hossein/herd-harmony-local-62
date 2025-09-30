@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Calendar, Weight, Stethoscope, Camera, FileText } from 'lucide-react';
-import { Goat, WeightRecord, HealthRecord } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord } from '@herd-harmony/shared-types/goat';
 
 interface GoatTimelineProps {
   goat: Goat;

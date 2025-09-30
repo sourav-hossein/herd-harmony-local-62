@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, MapPin, Users, BarChart } from 'lucide-react';
 import * as turf from '@turf/turf';
 import { useFarm } from '@/context/FarmContext';
-import type { Pasture } from '@/types/farm';
+import type { Pasture } from '@herd-harmony/shared-types/farm';
 import 'leaflet/dist/leaflet.css';
 
 // Helper to generate ID

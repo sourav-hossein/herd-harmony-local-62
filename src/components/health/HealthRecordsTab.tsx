@@ -24,7 +24,7 @@ import {
   Bug,
   Activity
 } from 'lucide-react';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 
 const healthTypeIcons = {
   vaccination: Syringe,

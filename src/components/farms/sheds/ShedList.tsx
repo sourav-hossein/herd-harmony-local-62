@@ -12,7 +12,7 @@ import {
   MapPin,
   AlertCircle
 } from 'lucide-react';
-import { Shed } from '@/types/farm';
+import { Shed } from '@herd-harmony/shared-types/farm';
 import ShedForm from './ShedForm';
 import PartitionManager from './PartitionManager';
 import { useGoatContext } from '@/context/GoatContext';

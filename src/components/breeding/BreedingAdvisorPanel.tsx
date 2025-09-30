@@ -14,7 +14,7 @@ import {
   Star,
   Info
 } from 'lucide-react';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import { BreedingAdvisor } from '@/lib/breedingAdvisor';
 import { GeneticPredictor } from '@/lib/predictGenetics';
 import { GeneticsService } from '@/lib/genetics';

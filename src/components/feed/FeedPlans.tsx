@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, Edit, Trash2, Save, X, Calendar } from 'lucide-react';
-import { Feed, FeedPlan, FeedPlanItem } from '@/types/goat';
+import { Feed, FeedPlan, FeedPlanItem } from '@herd-harmony/shared-types/goat';
 import { toast } from 'sonner';
 
 interface FeedPlansProps {

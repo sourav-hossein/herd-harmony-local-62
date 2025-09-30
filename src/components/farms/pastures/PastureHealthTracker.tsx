@@ -16,8 +16,8 @@ import {
   Camera,
   Calendar
 } from 'lucide-react';
-import { PastureHealthLog } from '@/types/grazing';
-import { Pasture } from '@/types/farm';
+import { PastureHealthLog } from '@herd-harmony/shared-types/grazing';
+import { Pasture } from '@herd-harmony/shared-types/farm';
 import { useFarm } from '@/context/FarmContext';
 import { useFacilities } from '@/context/FacilitiesContext';
 

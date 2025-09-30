@@ -1,5 +1,5 @@
-import { Pasture } from '@/types/farm';
-import { RotationPlan, RotationScheduleItem, GrazingLog, PastureHealthLog, PastureUtilization, GrazingAlert } from '@/types/grazing';
+import { Pasture } from '@herd-harmony/shared-types/farm';
+import { RotationPlan, RotationScheduleItem, GrazingLog, PastureHealthLog, PastureUtilization, GrazingAlert } from '@herd-harmony/shared-types/grazing';
 import * as turf from '@turf/turf';
 
 export class GrazingService {

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Edit, Save, X, User } from 'lucide-react';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import GoatLifeTimeline from '../media/GoatLifeTimeline';
 
 interface InteractiveGeneralTabProps {

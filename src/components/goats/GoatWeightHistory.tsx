@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Weight, Plus, Edit2, Trash2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Goat, WeightRecord } from '@/types/goat';
+import { Goat, WeightRecord } from '@herd-harmony/shared-types/goat';
 
 interface GoatWeightHistoryProps {
   goat: Goat;

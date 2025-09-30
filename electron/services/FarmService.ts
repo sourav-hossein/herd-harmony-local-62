@@ -1,8 +1,18 @@
-const fs = require('fs');
-const path = require('path');
-const { app } = require('electron');
+import * as fs from 'fs';
+import * as fsp from 'fs/promises';
+import path from 'path';
+import { app } from 'electron';
+import { DatabaseService } from './DatabaseService';
+import { FarmMeta, FarmMapData, PastureMapData } from '@herd-harmony/shared-types/farm';
 
 class FarmService {
+  private userDataPath: string;
+  private basePath: string;
+  private farmsMetaPath: string;
+  private activeFarmMetaPath: string;
+  private mapsPath: string;
+  private tilesPath: string;
+
   constructor() {
     this.userDataPath = app.getPath('userData');
     this.basePath = path.join(this.userDataPath, 'farm-data');
@@ -13,7 +23,7 @@ class FarmService {
     this.ensureBaseDir();
   }
 
-  ensureBaseDir() {
+  private ensureBaseDir(): void {
     const dirs = [this.basePath, this.mapsPath, this.tilesPath];
     dirs.forEach(dir => {
       if (!fs.existsSync(dir)) {
@@ -29,7 +39,7 @@ class FarmService {
     }
   }
 
-  listFarms() {
+  private listFarms(): FarmMeta[] {
     try {
       const data = fs.readFileSync(this.farmsMetaPath, 'utf8');
       return JSON.parse(data);
@@ -39,25 +49,24 @@ class FarmService {
     }
   }
 
-  getFarmDataPath(farmId) {
+  private getFarmDataPath(farmId: string): string {
     const farm = this.listFarms().find(f => f.id === farmId);
     if (!farm) {
       return path.join(this.basePath, farmId);
     }
-    
-    const DatabaseService = require('./DatabaseService.cjs');
+
     const tempDb = new DatabaseService(farm, this.basePath);
     return tempDb.dbPath;
   }
 
-  getFarmMapPath(farmId) {
+  private getFarmMapPath(farmId: string): string {
     return path.join(this.mapsPath, `${farmId}.json`);
   }
 
-  createFarm(farmInput) {
+  createFarm(farmInput: Omit<FarmMeta, 'id' | 'createdAt'> & { mapData?: FarmMapData }): FarmMeta {
     const farms = this.listFarms();
     const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-    const newFarm = {
+    const newFarm: FarmMeta = {
       ...farmInput,
       id: newId,
       createdAt: new Date().toISOString(),
@@ -72,13 +81,12 @@ class FarmService {
     }
 
     // Initialize database with farm metadata
-    const DatabaseService = require('./DatabaseService.cjs');
     const dbService = new DatabaseService(newFarm, this.basePath);
-    
+
     return newFarm;
   }
 
-  updateFarm(farmId, updates) {
+  updateFarm(farmId: string, updates: Partial<FarmMeta> & { mapData?: FarmMapData }): FarmMeta | null {
     const farms = this.listFarms();
     const index = farms.findIndex(f => f.id === farmId);
     if (index !== -1) {
@@ -95,11 +103,11 @@ class FarmService {
     return null;
   }
 
-  deleteFarm(farmId) {
+  deleteFarm(farmId: string): boolean {
     const farms = this.listFarms();
     const farmToDelete = farms.find(f => f.id === farmId);
     const updatedFarms = farms.filter(f => f.id !== farmId);
-    
+
     fs.writeFileSync(this.farmsMetaPath, JSON.stringify(updatedFarms, null, 2));
 
     // Delete farm directory and map data
@@ -128,10 +136,10 @@ class FarmService {
   }
 
   // Map data management
-  saveFarmMapData(farmId, mapData) {
+  saveFarmMapData(farmId: string, mapData: FarmMapData): boolean {
     try {
       const mapPath = this.getFarmMapPath(farmId);
-      const mapDataToSave = {
+      const mapDataToSave: FarmMapData = {
         farmId,
         center: mapData.center,
         zoom: mapData.zoom,
@@ -149,7 +157,7 @@ class FarmService {
     }
   }
 
-  getFarmMapData(farmId) {
+  getFarmMapData(farmId: string): FarmMapData | null {
     try {
       const mapPath = this.getFarmMapPath(farmId);
       if (fs.existsSync(mapPath)) {
@@ -164,13 +172,13 @@ class FarmService {
   }
 
   // Tile caching for offline maps
-  cacheTileForFarm(farmId, tileKey, tileData) {
+  cacheTileForFarm(farmId: string, tileKey: string, tileData: Buffer): boolean {
     try {
       const farmTilesDir = path.join(this.tilesPath, farmId);
       if (!fs.existsSync(farmTilesDir)) {
         fs.mkdirSync(farmTilesDir, { recursive: true });
       }
-      
+
       const tilePath = path.join(farmTilesDir, `${tileKey}.png`);
       fs.writeFileSync(tilePath, tileData);
       return true;
@@ -180,7 +188,7 @@ class FarmService {
     }
   }
 
-  getCachedTile(farmId, tileKey) {
+  getCachedTile(farmId: string, tileKey: string): Buffer | null {
     try {
       const tilePath = path.join(this.tilesPath, farmId, `${tileKey}.png`);
       if (fs.existsSync(tilePath)) {
@@ -193,7 +201,7 @@ class FarmService {
     }
   }
 
-  cleanupFarmTiles(farmId) {
+  cleanupFarmTiles(farmId: string): void {
     try {
       const farmTilesDir = path.join(this.tilesPath, farmId);
       if (fs.existsSync(farmTilesDir)) {
@@ -205,13 +213,13 @@ class FarmService {
   }
 
   // Pasture-related map operations
-  savePastureMapData(farmId, pastureId, mapData) {
+  savePastureMapData(farmId: string, pastureId: string, mapData: PastureMapData): boolean {
     try {
       const farmMapData = this.getFarmMapData(farmId) || { pastures: {} };
       if (!farmMapData.pastures) {
         farmMapData.pastures = {};
       }
-      
+
       farmMapData.pastures[pastureId] = {
         ...mapData,
         savedAt: new Date().toISOString()
@@ -224,7 +232,7 @@ class FarmService {
     }
   }
 
-  getPastureMapData(farmId, pastureId) {
+  getPastureMapData(farmId: string, pastureId: string): PastureMapData | null {
     try {
       const farmMapData = this.getFarmMapData(farmId);
       return farmMapData?.pastures?.[pastureId] || null;
@@ -235,17 +243,17 @@ class FarmService {
   }
 
   // Utility methods
-  getFarmMapBounds(farmId) {
+  getFarmMapBounds(farmId: string): any | null {
     const mapData = this.getFarmMapData(farmId);
     return mapData?.bounds || null;
   }
 
-  isFarmMapAvailable(farmId) {
+  isFarmMapAvailable(farmId: string): boolean {
     const mapPath = this.getFarmMapPath(farmId);
     return fs.existsSync(mapPath);
   }
 
-  getActiveFarmId() {
+  getActiveFarmId(): string | null {
     try {
       const data = fs.readFileSync(this.activeFarmMetaPath, 'utf8');
       return JSON.parse(data).activeFarmId;
@@ -255,7 +263,7 @@ class FarmService {
     }
   }
 
-  setActiveFarmId(farmId) {
+  setActiveFarmId(farmId: string | null): boolean {
     try {
       fs.writeFileSync(this.activeFarmMetaPath, JSON.stringify({ activeFarmId: farmId }, null, 2));
       return true;
@@ -266,16 +274,15 @@ class FarmService {
   }
 
   // Export/Import functionality for farm data including maps
-  exportFarmData(farmId) {
+  exportFarmData(farmId: string): any | null {
     try {
       const farms = this.listFarms();
       const farm = farms.find(f => f.id === farmId);
       if (!farm) return null;
 
       const mapData = this.getFarmMapData(farmId);
-      
+
       // Get database data
-      const DatabaseService = require('./DatabaseService.cjs');
       const dbService = new DatabaseService(farm, this.basePath);
       // Add database export logic here if needed
 
@@ -290,11 +297,11 @@ class FarmService {
     }
   }
 
-  importFarmData(farmData) {
+  importFarmData(farmData: { farm: FarmMeta, mapData?: FarmMapData }): FarmMeta | null {
     try {
       // Create farm
       const importedFarm = this.createFarm(farmData.farm);
-      
+
       // Import map data
       if (farmData.mapData) {
         this.saveFarmMapData(importedFarm.id, farmData.mapData);
@@ -308,4 +315,4 @@ class FarmService {
   }
 }
 
-module.exports = FarmService;
+export { FarmService };

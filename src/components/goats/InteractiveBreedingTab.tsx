@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Heart, Baby, Plus, Edit, Trash, AlertCircle } from 'lucide-react';
-import { Goat, BreedingRecord } from '@/types/goat';
+import { Goat, BreedingRecord } from '@herd-harmony/shared-types/goat';
 import { useToast } from '@/hooks/use-toast';
 
 interface InteractiveBreedingTabProps {

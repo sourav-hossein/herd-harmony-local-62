@@ -11,7 +11,7 @@ import {
   Trash2,
   Plus 
 } from 'lucide-react';
-import { Shed, Partition } from '@/types/farm';
+import { Shed, Partition } from '@herd-harmony/shared-types/farm';
 import { useFacilities } from '@/context/FacilitiesContext';
 import { useGoatContext } from '@/context/GoatContext';
 

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useGoatContext } from '@/context/GoatContext';
-import { Goat, WeightRecord, BreedStandard, GrowthPerformance, GrowthAnalytics } from '@/types/goat';
+import { Goat, WeightRecord, BreedStandard, GrowthPerformance, GrowthAnalytics } from '@herd-harmony/shared-types/goat';
 
 
 

@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CircularProgressBar from '@/components/ui/circular-progress';
-import { Goat } from '@/types/goat';
-import { BreedingRecommendation, InbreedingAnalysis } from '@/types/pedigree';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { BreedingRecommendation, InbreedingAnalysis } from '@herd-harmony/shared-types/pedigree';
 import { Download, FileJson, FileText, FileImage, BrainCircuit, Users, ChevronsRight, GitCommit, Dna, Zap, Milk, Star } from 'lucide-react';
 
 interface PedigreeSidebarProps {

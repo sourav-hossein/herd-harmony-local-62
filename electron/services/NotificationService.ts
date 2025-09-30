@@ -1,19 +1,25 @@
-
-const { Notification } = require('electron');
+import { Notification, BrowserWindow } from 'electron';
+import { DatabaseService } from './DatabaseService';
+import { HealthRecord, Goat } from '@herd-harmony/shared-types/goat'; // Assuming types are here
 
 class NotificationService {
-  constructor() {
+  private enabled: boolean;
+  private checkInterval: NodeJS.Timeout | null;
+  private mainWindow: BrowserWindow | null;
+
+  constructor(mainWindow: BrowserWindow | null) {
     this.enabled = false;
     this.checkInterval = null;
+    this.mainWindow = mainWindow;
   }
 
-  async requestPermission() {
+  async requestPermission(): Promise<boolean> {
     // In Electron, notifications are available by default
     this.enabled = true;
     return true;
   }
 
-  startHealthReminders(databaseService) {
+  startHealthReminders(databaseService: DatabaseService): void {
     if (!this.enabled) return;
 
     // Check for health reminders every hour
@@ -25,37 +31,37 @@ class NotificationService {
     this.checkHealthReminders(databaseService);
   }
 
-  stopHealthReminders() {
+  stopHealthReminders(): void {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
     }
   }
 
-  checkHealthReminders(databaseService) {
+  private checkHealthReminders(databaseService: DatabaseService): void {
     try {
-      const healthRecords = databaseService.getAll('healthRecords');
+      const healthRecords = databaseService.getAll<HealthRecord>('healthRecords');
       const now = new Date();
-      
+
       const upcomingReminders = healthRecords.filter(record => {
         if (!record.nextDueDate) return false;
-        
+
         const dueDate = new Date(record.nextDueDate);
         const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         // Show notification for tasks due in 3 days or overdue
         return daysUntilDue <= 3;
       });
 
       upcomingReminders.forEach(record => {
-        const goats = databaseService.getAll('goats');
+        const goats = databaseService.getAll<Goat>('goats');
         const goat = goats.find(g => g.id === record.goatId);
-        
+
         if (goat) {
           const dueDate = new Date(record.nextDueDate);
           const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          
-          let title, body;
+
+          let title: string, body: string;
           if (daysUntilDue <= 0) {
             title = 'Overdue Health Task';
             body = `${goat.name} has an overdue ${record.type}: ${record.description}`;
@@ -63,7 +69,7 @@ class NotificationService {
             title = 'Upcoming Health Task';
             body = `${goat.name} needs ${record.type} in ${daysUntilDue} days: ${record.description}`;
           }
-          
+
           this.showNotification(title, body);
         }
       });
@@ -72,7 +78,7 @@ class NotificationService {
     }
   }
 
-  showNotification(title, body) {
+  showNotification(title: string, body: string): void {
     if (!this.enabled) return;
 
     try {
@@ -88,14 +94,14 @@ class NotificationService {
     }
   }
 
-  showVaccinationReminder(goatName, vaccinationType) {
+  showVaccinationReminder(goatName: string, vaccinationType: string): void {
     this.showNotification(
       'Vaccination Due',
       `${goatName} is due for ${vaccinationType} vaccination`
     );
   }
 
-  showTreatmentReminder(goatName, treatmentType) {
+  showTreatmentReminder(goatName: string, treatmentType: string): void {
     this.showNotification(
       'Treatment Required',
       `${goatName} requires ${treatmentType} treatment`
@@ -103,4 +109,4 @@ class NotificationService {
   }
 }
 
-module.exports = NotificationService;
+export { NotificationService };

@@ -12,7 +12,7 @@ import { CalendarIcon, Upload, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useGoatData } from '@/hooks/useDatabase';
-import { FinanceRecord } from '@/types/finance';
+import { FinanceRecord } from '@herd-harmony/shared-types/finance';
 
 // Update the props interface
 interface FinanceFormProps {

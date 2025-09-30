@@ -1,5 +1,5 @@
 
-import { Goat, WeightRecord, HealthRecord } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord } from '@herd-harmony/shared-types/goat';
 
 export const sampleGoats: Goat[] = [
   {

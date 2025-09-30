@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Weight, Plus, Edit, Trash, Scale, Calculator, Clock } from 'lucide-react';
-import { Goat, WeightRecord } from '@/types/goat';
+import { Goat, WeightRecord } from '@herd-harmony/shared-types/goat';
 import { useToast } from '@/hooks/use-toast';
 import { WeightInputForm, WeightFormData } from '@/components/weight/WeightInputForm';
 import { WeightHistoryChart } from '@/components/weight/WeightHistoryChart';

@@ -16,8 +16,8 @@ import {
   Heart,
   Activity
 } from 'lucide-react';
-import { MediaFile } from '@/types/goat';
-import { Goat } from '@/types/goat';
+import { MediaFile } from '@herd-harmony/shared-types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import { get } from 'http';
 import { useGoatContext } from '@/context/GoatContext';
 

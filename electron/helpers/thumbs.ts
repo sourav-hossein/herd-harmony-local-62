@@ -1,26 +1,25 @@
-// helpers/thumbs.cjs
-const sharp = require('sharp');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegStatic = require('ffmpeg-static');
-const path = require('path');
-const fs = require('fs');
+import sharp from 'sharp';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegStatic from 'ffmpeg-static';
+import path from 'path';
+import fs from 'fs';
 
 if (ffmpegStatic) {
   ffmpeg.setFfmpegPath(ffmpegStatic);
 }
 
-async function createImageThumbnail(srcPath, destPath, size = 320) {
+async function createImageThumbnail(srcPath: string, destPath: string, size: number = 320): Promise<string | null> {
   try {
     if (!fs.existsSync(path.dirname(destPath))) fs.mkdirSync(path.dirname(destPath), { recursive: true });
     await sharp(srcPath).resize(size, size, { fit: 'cover' }).toFile(destPath);
     return destPath;
-  } catch (err) {
+  } catch (err: any) {
     console.error('createImageThumbnail error', err);
     return null;
   }
 }
 
-function createVideoThumbnail(srcPath, destPath, time = '00:00:01') {
+function createVideoThumbnail(srcPath: string, destPath: string, time: string = '00:00:01'): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(path.dirname(destPath))) {
       fs.mkdirSync(path.dirname(destPath), { recursive: true });
@@ -30,15 +29,16 @@ function createVideoThumbnail(srcPath, destPath, time = '00:00:01') {
     const command = ffmpeg(srcPath);
 
     command
-      .on('codecData', (data) => {
+      .on('codecData', (data: any) => {
         console.log('Input video data:', data);
       })
-      .on('progress', (progress) => {
+      .on('progress', (progress: any) => {
         if (progress.percent === 0) {
+          // @ts-ignore
           console.log('ffmpeg command:', command.ffmpegProc.spawnargs.join(' '));
         }
       })
-      .on('error', (err, stdout, stderr) => {
+      .on('error', (err: Error, stdout: string, stderr: string) => {
         console.error('ffmpeg error:', err.message);
         console.error('ffmpeg stdout:', stdout);
         console.error('ffmpeg stderr:', stderr);
@@ -51,7 +51,7 @@ function createVideoThumbnail(srcPath, destPath, time = '00:00:01') {
           fs.renameSync(tempDest, destPath);
           console.log('Thumbnail created and resized:', destPath);
           resolve(destPath);
-        } catch (er) {
+        } catch (er: any) {
           console.warn('Post-process video thumb failed:', er);
           // If sharp fails, resolve with the original screenshot if it exists
           if (fs.existsSync(destPath)) {
@@ -71,4 +71,4 @@ function createVideoThumbnail(srcPath, destPath, time = '00:00:01') {
   });
 }
 
-module.exports = { createImageThumbnail, createVideoThumbnail };
+export { createImageThumbnail, createVideoThumbnail };

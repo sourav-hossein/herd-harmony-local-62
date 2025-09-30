@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Copy, Eye, Activity, Weight, Image } from 'lucide-react';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import { toast } from '@/components/ui/use-toast';
 import { useImageStorage } from '@/hooks/useImageStorage';
 

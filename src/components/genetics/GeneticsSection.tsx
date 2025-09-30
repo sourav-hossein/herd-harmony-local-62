@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Dna, Star, Palette, Scissors } from 'lucide-react';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 
 interface GeneticsSectionProps {
   genetics: Goat['genetics'];

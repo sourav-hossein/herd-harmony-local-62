@@ -14,7 +14,7 @@ import {
   Home,
   Users
 } from 'lucide-react';
-import { FarmMeta, FarmStats } from '@/types/farm';
+import { FarmMeta, FarmStats } from '@herd-harmony/shared-types/farm';
 import { formatDistanceToNow } from 'date-fns';
 import FarmWizard from './FarmWizard';
 import { useFarm } from '@/context/FarmContext';

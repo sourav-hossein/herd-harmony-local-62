@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useGoatContext } from '@/context/GoatContext';
 import { FinanceAI } from '@/lib/financeAI';
-import { FinanceRecord, FinanceStats } from '@/types/finance';
+import { FinanceRecord, FinanceStats } from '@herd-harmony/shared-types/finance';
 
 export function FinanceIntegration() {
   const { 

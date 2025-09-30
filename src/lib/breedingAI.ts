@@ -1,6 +1,6 @@
 
-import { Goat, WeightRecord, HealthRecord } from '@/types/goat';
-import { BreedingRecord, HeatCycle, KiddingRecord } from '@/types/breeding';
+import { Goat, WeightRecord, HealthRecord } from '@herd-harmony/shared-types/goat';
+import { BreedingRecord, HeatCycle, KiddingRecord } from '@herd-harmony/shared-types/breeding';
 
 export interface BreedingRecommendation {
   type: 'warning' | 'suggestion' | 'info';

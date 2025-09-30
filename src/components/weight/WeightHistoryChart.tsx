@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { TrendingUp, TrendingDown, BarChart3, Activity, Scale, Calculator } from 'lucide-react';
-import { WeightRecord } from '@/types/weight';
+import { WeightRecord } from '@herd-harmony/shared-types/weight';
 
 interface WeightHistoryChartProps {
   records: WeightRecord[];

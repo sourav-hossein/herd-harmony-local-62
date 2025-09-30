@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Scale, Calendar } from 'lucide-react';
-import { calculateWeightFromTape } from '@/types/weight';
+import { calculateWeightFromTape } from '@herd-harmony/shared-types/weight';
 
 interface WeightInputFormProps {
   onSubmit: (data: WeightFormData) => void;

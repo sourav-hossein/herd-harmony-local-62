@@ -1,7 +1,7 @@
-import { Goat, HealthRecord, WeightRecord, BreedingRecord } from '@/types/goat';
-import { FinanceRecord } from '@/types/finance';
-import { Pasture } from '@/types/farm';
-import { GrazingLog } from '@/types/grazing';
+import { Goat, HealthRecord, WeightRecord, BreedingRecord } from '@herd-harmony/shared-types/goat';
+import { FinanceRecord } from '@herd-harmony/shared-types/finance';
+import { Pasture } from '@herd-harmony/shared-types/farm';
+import { GrazingLog } from '@herd-harmony/shared-types/grazing';
 
 export interface AISettings {
   geminiApiKey?: string;

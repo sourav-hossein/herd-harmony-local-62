@@ -1,5 +1,5 @@
 
-import { Goat, WeightRecord, BreedStandard, GrowthPerformance, GrowthAnalytics } from '@/types/goat';
+import { Goat, WeightRecord, BreedStandard, GrowthPerformance, GrowthAnalytics } from '@herd-harmony/shared-types/goat';
 
 export interface GrowthInsight {
   type: 'warning' | 'suggestion' | 'info' | 'alert';

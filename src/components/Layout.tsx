@@ -32,7 +32,7 @@ import { Separator } from '@/components/ui/separator';
 import { useFacilities } from '@/context/FacilitiesContext';
 import { useGoatContext } from '@/context/GoatContext';
 import { Badge } from '@/components/ui/badge';
-import { FarmMeta } from '@/types/farm';
+import { FarmMeta } from '@herd-harmony/shared-types/farm';
 import { ModeToggle } from './ModeToggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { AccentColorPicker } from './AccentColorPicker';

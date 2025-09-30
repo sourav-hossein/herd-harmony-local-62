@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Shed, Pasture, Partition } from '@/types/farm';
+import { Shed, Pasture, Partition } from '@herd-harmony/shared-types/farm';
 import { useFarm } from '@/context/FarmContext';
-import { GrazingLog, PastureHealthLog, RotationPlan } from '@/types/grazing';
+import { GrazingLog, PastureHealthLog, RotationPlan } from '@herd-harmony/shared-types/grazing';
 
 interface FacilitiesContextType {
   sheds: Shed[];

@@ -16,13 +16,13 @@ import {
   Activity
 } from 'lucide-react';
 import { useGoatContext } from '@/context/GoatContext';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import GoatCard from './GoatCard';
 import InteractiveGoatProfile from './InteractiveGoatProfile';
 import GoatForm from './GoatForm';
 import { toast } from '@/components/ui/use-toast';
 import BreedingForm from '../breeding/BreedingForm';
-import { BreedingRecord } from '@/types/breeding';
+import { BreedingRecord } from '@herd-harmony/shared-types/breeding';
 
 export default function GoatManagement() {
   const { 

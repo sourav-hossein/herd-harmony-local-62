@@ -1,6 +1,6 @@
 
-import { Goat } from '@/types/goat';
-import { InbreedingAnalysis, BreedingRecommendation, GeneticTraits } from '@/types/pedigree';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { InbreedingAnalysis, BreedingRecommendation, GeneticTraits } from '@herd-harmony/shared-types/pedigree';
 
 export class BreedingAdvisor {
   // ---------------------------------------------------------------------------

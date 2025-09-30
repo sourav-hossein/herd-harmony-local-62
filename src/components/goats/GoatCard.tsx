@@ -20,7 +20,7 @@ import {
   Clock, // For last updated
   MapPin // Already there, but good to confirm
 } from 'lucide-react';
-import { Goat, MediaFile } from '@/types/goat';
+import { Goat, MediaFile } from '@herd-harmony/shared-types/goat';
 import { motion } from 'framer-motion'; // Import motion
 
 // Import Tooltip components

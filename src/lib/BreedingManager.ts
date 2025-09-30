@@ -1,5 +1,5 @@
-import { Goat } from '@/types/goat';
-import { BreedingRecord, KiddingRecord, KidDetail } from '@/types/breeding';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { BreedingRecord, KiddingRecord, KidDetail } from '@herd-harmony/shared-types/breeding';
 
 export class BreedingManager {
   /**

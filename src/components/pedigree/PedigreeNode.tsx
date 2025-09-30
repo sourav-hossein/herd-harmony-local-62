@@ -1,6 +1,6 @@
 import React from 'react';
 import GoatNode from './GoatNode';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 
 // This component is now a wrapper for the new GoatNode to ensure visual consistency.
 // It adapts the old PedigreeNodeData props to the new GoatNode props.

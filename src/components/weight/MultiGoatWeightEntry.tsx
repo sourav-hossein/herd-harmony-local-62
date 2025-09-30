@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Users, Scale, Calculator, Save, RotateCcw } from 'lucide-react';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import { WeightFormData } from './WeightInputForm';
-import { calculateWeightFromTape } from '@/types/weight';
+import { calculateWeightFromTape } from '@herd-harmony/shared-types/weight';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 interface MultiGoatWeightEntryProps {

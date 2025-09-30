@@ -1,5 +1,5 @@
 
-import { Goat, HealthRecord, WeightRecord, BreedingRecord } from '@/types/goat';
+import { Goat, HealthRecord, WeightRecord, BreedingRecord } from '@herd-harmony/shared-types/goat';
 
 export interface Alert {
   id: string;

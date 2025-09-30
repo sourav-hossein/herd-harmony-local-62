@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FarmData } from '@/context/FarmContext';
-import { OccupancyLog, OccupancyQueryParams } from '@/types/facilityTypes';
-import { FarmMeta, Partition, Pasture, Shed } from '@/types/farm';
-import { FinanceRecord } from '@/types/finance';
-import { Goat } from '@/types/goat';
-import { MediaFile } from '@/types/goat';
-import { GrazingLog, PastureHealthLog, RotationPlan } from '@/types/grazing';
+import { OccupancyLog, OccupancyQueryParams } from '@herd-harmony/shared-types/facilityTypes';
+import { FarmMeta, Partition, Pasture, Shed } from '@herd-harmony/shared-types/farm';
+import { FinanceRecord } from '@herd-harmony/shared-types/finance';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { MediaFile } from '@herd-harmony/shared-types/goat';
+import { GrazingLog, PastureHealthLog, RotationPlan } from '@herd-harmony/shared-types/grazing';
 import { useState, useEffect, useCallback } from 'react';
 
 export function useDatabase<T>(tableName: string, initialValue: T, options: { enabled: boolean } = { enabled: true }) {

@@ -1,4 +1,4 @@
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 
 export interface GeneticPrediction {
   hornStatus: string;

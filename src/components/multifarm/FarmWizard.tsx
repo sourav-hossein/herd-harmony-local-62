@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Palette, User, FileText, Fence, Download, Upload } from 'lucide-react';
-import { FarmMeta } from '@/types/farm';
+import { FarmMeta } from '@herd-harmony/shared-types/farm';
 import { MapContainer, TileLayer, FeatureGroup, Polygon } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import L from 'leaflet';

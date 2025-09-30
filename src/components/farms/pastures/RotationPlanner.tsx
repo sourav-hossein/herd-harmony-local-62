@@ -17,9 +17,9 @@ import {
   Play,
   Pause
 } from 'lucide-react';
-import { Pasture } from '@/types/farm';
-import { Goat } from '@/types/goat';
-import { RotationPlan, RotationScheduleItem } from '@/types/grazing';
+import { Pasture } from '@herd-harmony/shared-types/farm';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { RotationPlan, RotationScheduleItem } from '@herd-harmony/shared-types/grazing';
 import { useGoatContext } from '@/context/GoatContext';
 import { useFacilities } from '@/context/FacilitiesContext';
 

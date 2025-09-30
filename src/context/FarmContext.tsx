@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { FarmMeta } from '@/types/farm';
+import { FarmMeta } from '@herd-harmony/shared-types/farm';
 
 export interface MapData {
   center: [number, number];

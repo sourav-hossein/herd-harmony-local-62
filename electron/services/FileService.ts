@@ -1,28 +1,42 @@
-const { app, dialog } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const sharp = require('sharp');
-const ffmpeg = require('fluent-ffmpeg');
-const { randomUUID } = require('crypto');
+import { app, dialog, BrowserWindow } from 'electron';
+import path from 'path';
+import * as fs from 'fs';
+import * as fsp from 'fs/promises';
+import sharp from 'sharp';
+import ffmpeg from 'fluent-ffmpeg';
+import { randomUUID } from 'crypto';
 
 const MAX_FILE_SIZE_MB = 10;
 const THUMBNAIL_WIDTH = 200;
 
+interface ProcessedMedia {
+    goatId: string;
+    type: 'image' | 'video';
+    url: string;
+    thumbnailUrl: string | null;
+    size: number;
+    date: string;
+    originalFilename: string;
+}
+
 class FileService {
-    constructor(mainWindow) {
+    private mediaBasePath: string;
+    private mainWindow: BrowserWindow | null;
+
+    constructor(mainWindow: BrowserWindow | null) {
         this.mediaBasePath = path.join(app.getPath('userData'), 'goat-tracker-media');
         this.ensureMediaDir();
-        this.mainWindow = mainWindow
+        this.mainWindow = mainWindow;
     }
 
-    ensureMediaDir() {
+    private ensureMediaDir(): void {
         if (!fs.existsSync(this.mediaBasePath)) {
             fs.mkdirSync(this.mediaBasePath, { recursive: true });
         }
     }
 
-    async selectAndProcessMedia(goatId) {
-        const { canceled, filePaths } = await dialog.showOpenDialog({
+    async selectAndProcessMedia(goatId: string): Promise<ProcessedMedia[]> {
+        const { canceled, filePaths } = await dialog.showOpenDialog(this.mainWindow!, {
             properties: ['openFile', 'multiSelections'],
             filters: [
                 { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] },
@@ -35,7 +49,7 @@ class FileService {
             return [];
         }
 
-        const processedMedia = [];
+        const processedMedia: ProcessedMedia[] = [];
         for (const filePath of filePaths) {
             try {
                 const stats = fs.statSync(filePath);
@@ -64,8 +78,8 @@ class FileService {
                 const destinationPath = path.join(goatMediaDir, uniqueFilename);
                 fs.copyFileSync(filePath, destinationPath);
 
-                let thumbnailUrl = null;
-                let mediaType = isImage ? 'image' : 'video';
+                let thumbnailUrl: string | null = null;
+                const mediaType: 'image' | 'video' = isImage ? 'image' : 'video';
 
                 if (isImage) {
                     const thumbnailBuffer = await sharp(destinationPath)
@@ -98,7 +112,7 @@ class FileService {
         return processedMedia;
     }
 
-    async generateVideoThumbnail(videoPath, outputPath) {
+    async generateVideoThumbnail(videoPath: string, outputPath: string): Promise<void> {
         return new Promise((resolve, reject) => {
             ffmpeg(videoPath)
                 .screenshots({
@@ -108,11 +122,11 @@ class FileService {
                     size: `${THUMBNAIL_WIDTH}x?`, // Maintain aspect ratio
                 })
                 .on('end', () => resolve())
-                .on('error', (err) => reject(err));
+                .on('error', (err: Error) => reject(err));
         });
     }
 
-    deleteMediaFile(mediaUrl) {
+    deleteMediaFile(mediaUrl: string): void {
         try {
             // Extract the relative path from the custom protocol URL
             const relativePath = mediaUrl.replace('app:///', '');
@@ -127,7 +141,7 @@ class FileService {
             console.error(`Error deleting media file ${mediaUrl}:`, error);
         }
     }
-    async writeBase64File(directory, filename, base64Data) {
+    async writeBase64File(directory: string, filename: string, base64Data: string): Promise<string | null> {
     try {
       if (!fs.existsSync(directory)) fs.mkdirSync(directory, { recursive: true });
 
@@ -161,4 +175,4 @@ class FileService {
   }
 }
 
-module.exports = FileService;
+export { FileService };

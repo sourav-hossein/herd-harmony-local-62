@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { useGoatData } from '@/hooks/useDatabase';
 import { FinanceAI } from '@/lib/financeAI';
-import { FinanceRecord, FinanceStats, GoatProfitability } from '@/types/finance';
+import { FinanceRecord, FinanceStats, GoatProfitability } from '@herd-harmony/shared-types/finance';
 import { FinanceForm } from './FinanceForm';
 import { useGoatContext } from '@/context/GoatContext';
 import {

@@ -1,6 +1,6 @@
-import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@/types/goat';
-import { FinanceRecord } from '@/types/finance';
-import { MediaFile } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@herd-harmony/shared-types/goat';
+import { FinanceRecord } from '@herd-harmony/shared-types/finance';
+import { MediaFile } from '@herd-harmony/shared-types/goat';
 
 export interface DataIssue {
   id: string;

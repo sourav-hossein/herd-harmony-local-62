@@ -76,18 +76,7 @@ export interface Goat {
   updatedAt: Date;
 }
 
-export interface WeightRecord {
-  id: string;
-  goatId: string;
-  weight: number;
-  date: Date;
-  method: 'actual' | 'estimated';
-  chestGirth?: number;
-  bodyLength?: number;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+
 
 export interface HealthRecord {
   id: string;
@@ -107,53 +96,7 @@ export interface HealthRecord {
   updatedAt: Date;
 }
 
-export interface HeatCycle {
-  id: string;
-  goatId: string;
-  heatDate: Date;
-  expectedNextHeat: Date;
-  signs: string[];
-  intensity: 'light' | 'moderate' | 'strong';
-  notes?: string;
-  createdAt: Date;
-}
 
-export interface KidDetail {
-  id: string;
-  name: string;
-  gender: 'male' | 'female';
-  birthWeight: number;
-  status: 'alive' | 'deceased' | 'weak';
-  notes?: string;
-}
-
-export interface KiddingRecord {
-  id: string;
-  breedingId: string;
-  birthDate: Date;
-  totalKids: number;
-  kidDetails: KidDetail[];
-  complications?: string;
-  vetAssistance: boolean;
-  notes?: string;
-  createdAt: Date;
-}
-
-export interface BreedingRecord {
-  id: string;
-  damId: string; 
-  sireId: string; 
-  breedingDate: Date;
-  method: 'natural' | 'artificial';
-  expectedDueDate?: Date;
-  actualBirthDate?: Date;
-  numberOfKids?: number;
-  kidIds?: string[];
-  notes?: string;
-  status: 'planned' | 'confirmed' | 'completed' | 'failed';
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export interface Feed {
   id: string;

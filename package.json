@@ -5,13 +5,17 @@
   "version": "1.0.0",
   "description": "Goat Farm Management Application",
   "homepage": "./",
-  "main": "electron/main.cjs",
+  "main": "dist-electron/main.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build:dev": "vite build --mode development",
     "build": "vite build",
     "electron": "electron .",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:8080 && electron .\"",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "electron:dev": "concurrently \"npm run dev\" \"npm run build:electron && wait-on http://localhost:8080 && electron .\"",
     "test": "jest",
     "lint": "eslint ."
   },
@@ -82,7 +86,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-leaflet": "^4.2.1",
-    "react-leaflet-draw": "^0.21.0",
+    "react-leaflet-draw": "^0.20.6",
     "react-resizable-panels": "^2.1.3",
     "react-router-dom": "^6.26.2",
     "reactflow": "^11.11.4",

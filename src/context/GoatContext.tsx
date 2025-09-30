@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useGoatData } from '@/hooks/useDatabase';
-import { Goat, WeightRecord, HealthRecord, BreedingRecord, Feed, FeedPlan, FeedLog, HeatCycle, KiddingRecord } from '@/types/goat';
-import { MediaFile } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord, BreedingRecord, Feed, FeedPlan, FeedLog, HeatCycle, KiddingRecord } from '@herd-harmony/shared-types/goat';
+import { MediaFile } from '@herd-harmony/shared-types/goat';
 import { useFarm } from './FarmContext';
  
 interface GoatContextType {

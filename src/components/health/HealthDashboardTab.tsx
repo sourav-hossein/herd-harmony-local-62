@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { healthAI } from '@/lib/healthAI';
-import { HealthRecord } from '@/types/goat';
+import { HealthRecord } from '@herd-harmony/shared-types/goat';
 
 interface AIInsight {
   type: 'warning' | 'alert' | 'info';

@@ -1,5 +1,5 @@
-import { Goat, WeightRecord, HealthRecord } from '@/types/goat';
-import { FinanceRecord } from '@/types/finance';
+import { Goat, WeightRecord, HealthRecord } from '@herd-harmony/shared-types/goat';
+import { FinanceRecord } from '@herd-harmony/shared-types/finance';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface BulkValidationError {

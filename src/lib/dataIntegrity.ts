@@ -1,5 +1,5 @@
 
-import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@herd-harmony/shared-types/goat';
 
 export class DataIntegrityManager {
   static validateGoat(goat: Goat): { isValid: boolean; errors: string[] } {

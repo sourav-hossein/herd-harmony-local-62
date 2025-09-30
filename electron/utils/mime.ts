@@ -1,9 +1,9 @@
-function getMimeType(filename) {
+export function getMimeType(filename: string): string {
   if (!filename || typeof filename !== 'string') return 'application/octet-stream';
 
-  const extension = filename.split('.').pop().toLowerCase();
+  const extension = filename.split('.').pop()?.toLowerCase();
 
-  const mimeTypes = {
+  const mimeTypes: { [key: string]: string } = {
     // Images
     jpg: 'image/jpeg',
     jpeg: 'image/jpeg',
@@ -32,11 +32,7 @@ function getMimeType(filename) {
     mpg: 'video/mpeg',
     '3gp': 'video/3gpp',
     '3g2': 'video/3gpp2',
-
-
   };
 
-  return mimeTypes[extension] || 'application/octet-stream'; // Default fallback
+  return (extension && mimeTypes[extension]) || 'application/octet-stream'; // Default fallback
 }
-
-module.exports = { getMimeType };

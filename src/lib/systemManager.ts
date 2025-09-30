@@ -1,6 +1,6 @@
 
 import { DataIntegrityManager } from './dataIntegrity';
-import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@herd-harmony/shared-types/goat';
 
 export class GoatFarmSystemManager {
   private static instance: GoatFarmSystemManager;

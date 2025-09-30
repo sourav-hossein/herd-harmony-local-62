@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useFarm } from '@/context/FarmContext';
-import { FarmMeta } from '@/types/farm';
+import { FarmMeta } from '@herd-harmony/shared-types/farm';
 import { useTheme } from '@/context/ThemeContext';
 import OfflineMapComponent from '../multifarm/OfflineMapComponent';
 

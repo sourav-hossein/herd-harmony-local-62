@@ -13,7 +13,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useGoatContext } from '@/context/GoatContext';
-import { BreedingRecord, KiddingRecord } from '@/types/breeding';
+import { BreedingRecord, KiddingRecord } from '@herd-harmony/shared-types/breeding';
 import { BreedingManager } from '@/lib/BreedingManager';
 import BreedingForm from './BreedingForm';
 import KiddingForm from './KiddingForm';

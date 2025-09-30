@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Baby, Heart, Calendar, User, Plus, Eye } from 'lucide-react';
-import { Goat } from '@/types/goat';
-import { BreedingRecord, KiddingRecord } from '@/types/breeding';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { BreedingRecord, KiddingRecord } from '@herd-harmony/shared-types/breeding';
 import { useGoatContext } from '@/context/GoatContext';
 
 interface GoatBreedingHistoryProps {

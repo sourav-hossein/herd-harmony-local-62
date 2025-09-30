@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
 import 'reactflow/dist/style.css';
 import PedigreeNode  from './PedigreeNode';
-import { PedigreeTree as IPedigreeTree } from '@/types/pedigree';
+import { PedigreeTree as IPedigreeTree } from '@herd-harmony/shared-types/pedigree';
 
 interface PedigreeTreeProps {
   tree: IPedigreeTree;

@@ -1,10 +1,35 @@
-const fs = require('fs');
-const path = require('path');
-const { app } = require('electron');
-const SyncStateService = require('./SyncStateService.cjs');
+import * as fs from 'fs';
+import * as fsp from 'fs/promises';
+import path from 'path';
+import { app } from 'electron';
+import { SyncStateService } from './SyncStateService';
+import {
+  Goat,
+  WeightRecord,
+  HealthRecord,
+  BreedingRecord,
+  FinanceRecord,
+  Feed,
+  FeedPlan,
+  FeedLog,
+  MediaFile,
+  Shed,
+  Partition,
+  Pasture,
+  PastureHealthLog,
+  GrazingLog,
+  RotationPlan,
+  OccupancyLog,
+  OccupancyQueryParams,
+  FarmMeta
+} from '@herd-harmony/shared-types/goat'; // Assuming all types are in goat for now, will refine
 
 class DatabaseService {
-  constructor(farmData, basePath) {
+  private farmData: FarmMeta;
+  private basePath: string;
+  private dbPath: string;
+
+  constructor(farmData: FarmMeta, basePath: string) {
     this.farmData = farmData;
     this.basePath = basePath;
     this.dbPath = this.generateDbPath();
@@ -12,48 +37,48 @@ class DatabaseService {
     this.initDatabase();
   }
 
-  sanitizeDirectoryName(name) {
+  private sanitizeDirectoryName(name: string): string {
     return name
-      .replace(/[<>:"\/\\|?*\x00-\x1F]/g, '-') // Replace invalid characters
+      .replace(/[<>:"\\/|?*\x00-\x1F]/g, '-') // Replace invalid characters
       .replace(/\s+/g, '-')                     // Replace spaces with hyphens
       .replace(/-+/g, '-')                      // Replace multiple hyphens with single hyphen
       .replace(/^-|-$/g, '')                    // Remove leading/trailing hyphens
       .slice(0, 64);                            // Limit length to avoid too long paths
   }
 
-  generateDbPath() {
+  private generateDbPath(): string {
     const sanitizedName = this.sanitizeDirectoryName(this.farmData.name || 'Unknown-Farm');
     const dirName = `${sanitizedName}_${this.farmData.id}`;
     return path.join(String(this.basePath), dirName);
   }
 
-  ensureDatabaseDir() {
+  private ensureDatabaseDir(): void {
     if (!fs.existsSync(this.dbPath)) {
       fs.mkdirSync(this.dbPath, { recursive: true });
     }
   }
 
-  initDatabase() {
+  private initDatabase(): void {
     const coreTables = [
-      'goats', 
-      'weightRecords', 
-      'healthRecords', 
-      'breedingRecords', 
-      'financeRecords', 
-      'feeds', 
-      'feedPlans', 
-      'feedLogs', 
+      'goats',
+      'weightRecords',
+      'healthRecords',
+      'breedingRecords',
+      'financeRecords',
+      'feeds',
+      'feedPlans',
+      'feedLogs',
       'media'
     ];
 
     const facilityTables = [
-      'sheds',           // Basic shed information
-      'partitions',      // Shed partitions (separate for efficient querying)
-      'pastures',        // Pasture basic info
-      'pastureHealth',   // Pasture health tracking logs
-      'grazingLogs',     // Detailed grazing history
-      'rotationPlans',   // Pasture rotation schedules
-      'occupancyLogs'    // Historical occupancy tracking for sheds/partitions
+      'sheds',
+      'partitions',
+      'pastures',
+      'pastureHealth',
+      'grazingLogs',
+      'rotationPlans',
+      'occupancyLogs'
     ];
 
     // Create core data tables
@@ -65,52 +90,53 @@ class DatabaseService {
     });
   }
 
-  readTable(tableName) {
+  private readTable<T>(tableName: string): T[] {
     try {
       const tablePath = path.join(this.dbPath, `${tableName}.json`);
       const data = fs.readFileSync(tablePath, 'utf8');
       return JSON.parse(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error reading table ${tableName}:`, error);
       return [];
     }
   }
 
-  writeTable(tableName, data) {
+  private writeTable<T>(tableName: string, data: T[]): boolean {
     try {
       const tablePath = path.join(this.dbPath, `${tableName}.json`);
       fs.writeFileSync(tablePath, JSON.stringify(data, null, 2));
       SyncStateService.invalidate();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error writing table ${tableName}:`, error);
       return false;
     }
   }
 
-  generateId() {
+  private generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
-  getAll(tableName) {
-    return this.readTable(tableName);
+  getAll<T>(tableName: string): T[] {
+    return this.readTable<T>(tableName);
   }
 
-  add(tableName, item) {
-    const data = this.readTable(tableName);
-    const newItem = { ...item, id: this.generateId() };
+  add<T extends { id?: string }>(tableName: string, item: Omit<T, 'id'>): T {
+    const data = this.readTable<T>(tableName);
+    const newItem = { ...item, id: this.generateId() } as T;
     data.push(newItem);
     this.writeTable(tableName, data);
 
-    if (tableName === 'healthRecords' && newItem.cost && newItem.cost > 0) {
-      const financeRecord = {
+    if (tableName === 'healthRecords' && (newItem as HealthRecord).cost && (newItem as HealthRecord).cost > 0) {
+      const healthRecord = newItem as HealthRecord;
+      const financeRecord: Omit<FinanceRecord, 'id' | 'createdAt' | 'updatedAt'> = {
         type: 'expense',
-        category: newItem.type.charAt(0).toUpperCase() + newItem.type.slice(1), // Capitalize type
-        amount: newItem.cost,
-        date: newItem.date,
-        description: `Health record: ${newItem.description}`,
-        goatId: newItem.goatId,
-        healthRecordId: newItem.id,
+        category: healthRecord.type.charAt(0).toUpperCase() + healthRecord.type.slice(1),
+        amount: healthRecord.cost,
+        date: healthRecord.date,
+        description: `Health record: ${healthRecord.description}`,
+        goatId: healthRecord.goatId,
+        healthRecordId: healthRecord.id,
       };
       this.addFinanceRecord(financeRecord);
     }
@@ -118,8 +144,8 @@ class DatabaseService {
     return newItem;
   }
 
-  update(tableName, id, updates) {
-    const data = this.readTable(tableName);
+  update<T extends { id: string }>(tableName: string, id: string, updates: Partial<T>): T | null {
+    const data = this.readTable<T>(tableName);
     const index = data.findIndex(item => item.id === id);
     if (index !== -1) {
       const originalItem = data[index];
@@ -127,12 +153,12 @@ class DatabaseService {
       this.writeTable(tableName, data);
 
       if (tableName === 'healthRecords') {
-        const updatedItem = data[index];
-        const financeRecords = this.readTable('financeRecords');
+        const updatedItem = data[index] as HealthRecord;
+        const financeRecords = this.readTable<FinanceRecord>('financeRecords');
         const existingFinanceRecord = financeRecords.find(fr => fr.healthRecordId === id);
 
         if (updatedItem.cost && updatedItem.cost > 0) {
-          const financeRecordData = {
+          const financeRecordData: Omit<FinanceRecord, 'id' | 'createdAt' | 'updatedAt'> = {
             type: 'expense',
             category: updatedItem.type.charAt(0).toUpperCase() + updatedItem.type.slice(1),
             amount: updatedItem.cost,
@@ -157,8 +183,8 @@ class DatabaseService {
     return null;
   }
 
-    delete(tableName, id) {
-    const data = this.readTable(tableName);
+  delete<T extends { id: string }>(tableName: string, id: string): T | null {
+    const data = this.readTable<T>(tableName);
     const itemToDelete = data.find(item => item.id === id);
     if (!itemToDelete) return null;
 
@@ -166,7 +192,7 @@ class DatabaseService {
     this.writeTable(tableName, filteredData);
 
     if (tableName === 'healthRecords' && itemToDelete) {
-      const financeRecords = this.readTable('financeRecords');
+      const financeRecords = this.readTable<FinanceRecord>('financeRecords');
       const existingFinanceRecord = financeRecords.find(fr => fr.healthRecordId === id);
       if (existingFinanceRecord) {
         this.deleteFinanceRecord(existingFinanceRecord.id);
@@ -176,10 +202,10 @@ class DatabaseService {
     return itemToDelete;
   }
 
-  addFinanceRecord(record) {
-    const data = this.readTable('financeRecords');
-    const newRecord = { 
-      ...record, 
+  addFinanceRecord(record: Omit<FinanceRecord, 'id' | 'createdAt' | 'updatedAt'>): FinanceRecord {
+    const data = this.readTable<FinanceRecord>('financeRecords');
+    const newRecord: FinanceRecord = {
+      ...record,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -189,14 +215,14 @@ class DatabaseService {
     return newRecord;
   }
 
-  updateFinanceRecord(id, updates) {
-    const data = this.readTable('financeRecords');
+  updateFinanceRecord(id: string, updates: Partial<Omit<FinanceRecord, 'id' | 'createdAt' | 'updatedAt'>>): FinanceRecord | null {
+    const data = this.readTable<FinanceRecord>('financeRecords');
     const index = data.findIndex(record => record.id === id);
     if (index !== -1) {
-      data[index] = { 
-        ...data[index], 
-        ...updates, 
-        updatedAt: new Date().toISOString() 
+      data[index] = {
+        ...data[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
       };
       this.writeTable('financeRecords', data);
       return data[index];
@@ -204,22 +230,22 @@ class DatabaseService {
     return null;
   }
 
-  deleteFinanceRecord(id) {
-    const data = this.readTable('financeRecords');
+  deleteFinanceRecord(id: string): boolean {
+    const data = this.readTable<FinanceRecord>('financeRecords');
     const filteredData = data.filter(record => record.id !== id);
     this.writeTable('financeRecords', filteredData);
     return filteredData.length < data.length;
   }
 
-  getFinanceRecords() {
-    return this.readTable('financeRecords');
+  getFinanceRecords(): FinanceRecord[] {
+    return this.readTable<FinanceRecord>('financeRecords');
   }
 
   // Feed management methods
-  addFeed(feed) {
-    const data = this.readTable('feeds');
-    const newFeed = { 
-      ...feed, 
+  addFeed(feed: Omit<Feed, 'id' | 'createdAt' | 'updatedAt'>): Feed {
+    const data = this.readTable<Feed>('feeds');
+    const newFeed: Feed = {
+      ...feed,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -228,7 +254,7 @@ class DatabaseService {
     this.writeTable('feeds', data);
 
     if (newFeed.cost && newFeed.cost > 0) {
-      const financeRecord = {
+      const financeRecord: Omit<FinanceRecord, 'id' | 'createdAt' | 'updatedAt'> = {
         type: 'expense',
         category: 'Feed',
         amount: newFeed.cost,
@@ -242,23 +268,23 @@ class DatabaseService {
     return newFeed;
   }
 
-  updateFeed(id, updates) {
-    const data = this.readTable('feeds');
+  updateFeed(id: string, updates: Partial<Omit<Feed, 'id' | 'createdAt' | 'updatedAt'>>): Feed | null {
+    const data = this.readTable<Feed>('feeds');
     const index = data.findIndex(feed => feed.id === id);
     if (index !== -1) {
-      data[index] = { 
-        ...data[index], 
-        ...updates, 
-        updatedAt: new Date().toISOString() 
+      data[index] = {
+        ...data[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
       };
       this.writeTable('feeds', data);
-      
+
       const updatedFeed = data[index];
-      const financeRecords = this.readTable('financeRecords');
+      const financeRecords = this.readTable<FinanceRecord>('financeRecords');
       const existingFinanceRecord = financeRecords.find(fr => fr.feedId === id);
 
       if (updatedFeed.cost && updatedFeed.cost > 0) {
-        const financeRecordData = {
+        const financeRecordData: Omit<FinanceRecord, 'id' | 'createdAt' | 'updatedAt'> = {
           type: 'expense',
           category: 'Feed',
           amount: updatedFeed.cost,
@@ -281,14 +307,14 @@ class DatabaseService {
     return null;
   }
 
-  deleteFeed(id) {
-    const data = this.readTable('feeds');
+  deleteFeed(id: string): boolean {
+    const data = this.readTable<Feed>('feeds');
     const itemToDelete = data.find(item => item.id === id);
     const filteredData = data.filter(feed => feed.id !== id);
     this.writeTable('feeds', filteredData);
 
     if (itemToDelete) {
-      const financeRecords = this.readTable('financeRecords');
+      const financeRecords = this.readTable<FinanceRecord>('financeRecords');
       const existingFinanceRecord = financeRecords.find(fr => fr.feedId === id);
       if (existingFinanceRecord) {
         this.deleteFinanceRecord(existingFinanceRecord.id);
@@ -298,15 +324,15 @@ class DatabaseService {
     return filteredData.length < data.length;
   }
 
-  getFeeds() {
-    return this.readTable('feeds');
+  getFeeds(): Feed[] {
+    return this.readTable<Feed>('feeds');
   }
 
   // Feed plan methods
-  addFeedPlan(plan) {
-    const data = this.readTable('feedPlans');
-    const newPlan = { 
-      ...plan, 
+  addFeedPlan(plan: Omit<FeedPlan, 'id' | 'createdAt' | 'updatedAt'>): FeedPlan {
+    const data = this.readTable<FeedPlan>('feedPlans');
+    const newPlan: FeedPlan = {
+      ...plan,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -316,14 +342,14 @@ class DatabaseService {
     return newPlan;
   }
 
-  updateFeedPlan(id, updates) {
-    const data = this.readTable('feedPlans');
+  updateFeedPlan(id: string, updates: Partial<Omit<FeedPlan, 'id' | 'createdAt' | 'updatedAt'>>): FeedPlan | null {
+    const data = this.readTable<FeedPlan>('feedPlans');
     const index = data.findIndex(plan => plan.id === id);
     if (index !== -1) {
-      data[index] = { 
-        ...data[index], 
-        ...updates, 
-        updatedAt: new Date().toISOString() 
+      data[index] = {
+        ...data[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
       };
       this.writeTable('feedPlans', data);
       return data[index];
@@ -331,22 +357,22 @@ class DatabaseService {
     return null;
   }
 
-  deleteFeedPlan(id) {
-    const data = this.readTable('feedPlans');
+  deleteFeedPlan(id: string): boolean {
+    const data = this.readTable<FeedPlan>('feedPlans');
     const filteredData = data.filter(plan => plan.id !== id);
     this.writeTable('feedPlans', filteredData);
     return filteredData.length < data.length;
   }
 
-  getFeedPlans() {
-    return this.readTable('feedPlans');
+  getFeedPlans(): FeedPlan[] {
+    return this.readTable<FeedPlan>('feedPlans');
   }
 
   // Feed log methods
-  addFeedLog(log) {
-    const data = this.readTable('feedLogs');
-    const newLog = { 
-      ...log, 
+  addFeedLog(log: Omit<FeedLog, 'id' | 'createdAt'>): FeedLog {
+    const data = this.readTable<FeedLog>('feedLogs');
+    const newLog: FeedLog = {
+      ...log,
       id: this.generateId(),
       createdAt: new Date().toISOString()
     };
@@ -355,8 +381,8 @@ class DatabaseService {
     return newLog;
   }
 
-  updateFeedLog(id, updates) {
-    const data = this.readTable('feedLogs');
+  updateFeedLog(id: string, updates: Partial<Omit<FeedLog, 'id' | 'createdAt'>>): FeedLog | null {
+    const data = this.readTable<FeedLog>('feedLogs');
     const index = data.findIndex(log => log.id === id);
     if (index !== -1) {
       data[index] = { ...data[index], ...updates };
@@ -366,74 +392,74 @@ class DatabaseService {
     return null;
   }
 
-  deleteFeedLog(id) {
-    const data = this.readTable('feedLogs');
+  deleteFeedLog(id: string): boolean {
+    const data = this.readTable<FeedLog>('feedLogs');
     const filteredData = data.filter(log => log.id !== id);
     this.writeTable('feedLogs', filteredData);
     return filteredData.length < data.length;
   }
 
-  getFeedLogs() {
-    return this.readTable('feedLogs');
+  getFeedLogs(): FeedLog[] {
+    return this.readTable<FeedLog>('feedLogs');
   }
 
   // Media management methods
-  addMedia(media) {
-    return this.add('media', media);
+  addMedia(media: Omit<MediaFile, 'id' | 'createdAt' | 'updatedAt'>): MediaFile {
+    return this.add<MediaFile>('media', media);
   }
 
-  getMediaByGoatId(goatId) {
-    const allMedia = this.readTable('media');
+  getMediaByGoatId(goatId: string): MediaFile[] {
+    const allMedia = this.readTable<MediaFile>('media');
     return allMedia.filter(mediaItem => mediaItem.goatId === goatId);
   }
 
-  updateMedia(id, updates) {
-    return this.update('media', id, updates);
+  updateMedia(id: string, updates: Partial<Omit<MediaFile, 'id' | 'createdAt' | 'updatedAt'>>): MediaFile | null {
+    return this.update<MediaFile>('media', id, updates);
   }
 
-  deleteMedia(id) {
-    return this.delete('media', id);
+  deleteMedia(id: string): MediaFile | null {
+    return this.delete<MediaFile>('media', id);
   }
 
-  exportData() {
+  exportData(): any {
     const data = {
-      goats: this.readTable('goats'),
-      weightRecords: this.readTable('weightRecords'),
-      healthRecords: this.readTable('healthRecords'),
-      breedingRecords: this.readTable('breedingRecords'),
-      financeRecords: this.readTable('financeRecords'),
-      feeds: this.readTable('feeds'),
-      feedPlans: this.readTable('feedPlans'),
-      feedLogs: this.readTable('feedLogs'),
-      media: this.readTable('media'),
+      goats: this.readTable<Goat>('goats'),
+      weightRecords: this.readTable<WeightRecord>('weightRecords'),
+      healthRecords: this.readTable<HealthRecord>('healthRecords'),
+      breedingRecords: this.readTable<BreedingRecord>('breedingRecords'),
+      financeRecords: this.readTable<FinanceRecord>('financeRecords'),
+      feeds: this.readTable<Feed>('feeds'),
+      feedPlans: this.readTable<FeedPlan>('feedPlans'),
+      feedLogs: this.readTable<FeedLog>('feedLogs'),
+      media: this.readTable<MediaFile>('media'),
       exportDate: new Date().toISOString(),
       version: '1.0'
     };
     return data;
   }
 
-  importData(data) {
+  importData(data: any): boolean {
     try {
-      this.writeTable('goats', data.goats || []);
-      this.writeTable('weightRecords', data.weightRecords || []);
-      this.writeTable('healthRecords', data.healthRecords || []);
-      this.writeTable('breedingRecords', data.breedingRecords || []);
-      this.writeTable('financeRecords', data.financeRecords || []);
-      this.writeTable('feeds', data.feeds || []);
-      this.writeTable('feedPlans', data.feedPlans || []);
-      this.writeTable('feedLogs', data.feedLogs || []);
-      this.writeTable('media', data.media || []);
+      this.writeTable<Goat>('goats', data.goats || []);
+      this.writeTable<WeightRecord>('weightRecords', data.weightRecords || []);
+      this.writeTable<HealthRecord>('healthRecords', data.healthRecords || []);
+      this.writeTable<BreedingRecord>('breedingRecords', data.breedingRecords || []);
+      this.writeTable<FinanceRecord>('financeRecords', data.financeRecords || []);
+      this.writeTable<Feed>('feeds', data.feeds || []);
+      this.writeTable<FeedPlan>('feedPlans', data.feedPlans || []);
+      this.writeTable<FeedLog>('feedLogs', data.feedLogs || []);
+      this.writeTable<MediaFile>('media', data.media || []);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error importing data:', error);
       return false;
     }
   }
 
   // Shed Management Methods
-  addShed(shed) {
-    const sheds = this.readTable('sheds');
-    const newShed = {
+  addShed(shed: Omit<Shed, 'id' | 'createdAt' | 'updatedAt'>): Shed {
+    const sheds = this.readTable<Shed>('sheds');
+    const newShed: Shed = {
       ...shed,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
@@ -444,8 +470,8 @@ class DatabaseService {
     return newShed;
   }
 
-  updateShed(id, updates) {
-    const sheds = this.readTable('sheds');
+  updateShed(id: string, updates: Partial<Omit<Shed, 'id' | 'createdAt' | 'updatedAt'>>): Shed | null {
+    const sheds = this.readTable<Shed>('sheds');
     const index = sheds.findIndex(s => s.id === id);
     if (index !== -1) {
       sheds[index] = {
@@ -459,19 +485,19 @@ class DatabaseService {
     return null;
   }
 
-  deleteShed(id) {
+  deleteShed(id: string): boolean {
     // Delete shed and its associated partitions
-    const sheds = this.readTable('sheds');
+    const sheds = this.readTable<Shed>('sheds');
     const filteredSheds = sheds.filter(s => s.id !== id);
     this.writeTable('sheds', filteredSheds);
 
     // Clean up related partitions
-    const partitions = this.readTable('partitions');
+    const partitions = this.readTable<Partition>('partitions');
     const filteredPartitions = partitions.filter(p => p.shedId !== id);
     this.writeTable('partitions', filteredPartitions);
 
     // Clean up occupancy logs
-    const occupancyLogs = this.readTable('occupancyLogs');
+    const occupancyLogs = this.readTable<OccupancyLog>('occupancyLogs');
     const filteredLogs = occupancyLogs.filter(log => log.shedId !== id);
     this.writeTable('occupancyLogs', filteredLogs);
 
@@ -479,9 +505,9 @@ class DatabaseService {
   }
 
   // Partition Management Methods
-  addPartition(partition) {
-    const partitions = this.readTable('partitions');
-    const newPartition = {
+  addPartition(partition: Omit<Partition, 'id' | 'createdAt' | 'updatedAt'>): Partition {
+    const partitions = this.readTable<Partition>('partitions');
+    const newPartition: Partition = {
       ...partition,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
@@ -492,13 +518,13 @@ class DatabaseService {
     return newPartition;
   }
 
-  getPartitionsByShed(shedId) {
-    const partitions = this.readTable('partitions');
+  getPartitionsByShed(shedId: string): Partition[] {
+    const partitions = this.readTable<Partition>('partitions');
     return partitions.filter(p => p.shedId === shedId);
   }
 
-  updatePartition(id, updates) {
-    const partitions = this.readTable('partitions');
+  updatePartition(id: string, updates: Partial<Omit<Partition, 'id' | 'createdAt' | 'updatedAt'>>): Partition | null {
+    const partitions = this.readTable<Partition>('partitions');
     const index = partitions.findIndex(p => p.id === id);
     if (index !== -1) {
       partitions[index] = {
@@ -513,9 +539,9 @@ class DatabaseService {
   }
 
   // Pasture Management Methods
-  addPasture(pasture) {
-    const pastures = this.readTable('pastures');
-    const newPasture = {
+  addPasture(pasture: Omit<Pasture, 'id' | 'createdAt' | 'updatedAt'>): Pasture {
+    const pastures = this.readTable<Pasture>('pastures');
+    const newPasture: Pasture = {
       ...pasture,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
@@ -526,8 +552,8 @@ class DatabaseService {
     return newPasture;
   }
 
-  updatePasture(id, updates) {
-    const pastures = this.readTable('pastures');
+  updatePasture(id: string, updates: Partial<Omit<Pasture, 'id' | 'createdAt' | 'updatedAt'>>): Pasture | null {
+    const pastures = this.readTable<Pasture>('pastures');
     const index = pastures.findIndex(p => p.id === id);
     if (index !== -1) {
       pastures[index] = {
@@ -541,16 +567,16 @@ class DatabaseService {
     return null;
   }
 
-  deletePasture(id) {
+  deletePasture(id: string): boolean {
     // Delete pasture and its associated records
-    const pastures = this.readTable('pastures');
+    const pastures = this.readTable<Pasture>('pastures');
     const filteredPastures = pastures.filter(p => p.id !== id);
     this.writeTable('pastures', filteredPastures);
 
     // Clean up related records
     ['pastureHealth', 'grazingLogs', 'rotationPlans'].forEach(table => {
-      const records = this.readTable(table);
-      const filtered = records.filter(r => r.pastureId !== id);
+      const records = this.readTable<any>(table);
+      const filtered = records.filter((r: any) => r.pastureId !== id);
       this.writeTable(table, filtered);
     });
 
@@ -558,9 +584,9 @@ class DatabaseService {
   }
 
   // Grazing and Health Tracking Methods
-  addGrazingLog(log) {
-    const logs = this.readTable('grazingLogs');
-    const newLog = {
+  addGrazingLog(log: Omit<GrazingLog, 'id' | 'timestamp'>): GrazingLog {
+    const logs = this.readTable<GrazingLog>('grazingLogs');
+    const newLog: GrazingLog = {
       ...log,
       id: this.generateId(),
       timestamp: new Date().toISOString()
@@ -570,9 +596,9 @@ class DatabaseService {
     return newLog;
   }
 
-  addPastureHealthLog(log) {
-    const logs = this.readTable('pastureHealth');
-    const newLog = {
+  addPastureHealthLog(log: Omit<PastureHealthLog, 'id' | 'timestamp'>): PastureHealthLog {
+    const logs = this.readTable<PastureHealthLog>('pastureHealth');
+    const newLog: PastureHealthLog = {
       ...log,
       id: this.generateId(),
       timestamp: new Date().toISOString()
@@ -582,9 +608,9 @@ class DatabaseService {
     return newLog;
   }
 
-  addRotationPlan(plan) {
-    const plans = this.readTable('rotationPlans');
-    const newPlan = {
+  addRotationPlan(plan: Omit<RotationPlan, 'id' | 'createdAt' | 'updatedAt'>): RotationPlan {
+    const plans = this.readTable<RotationPlan>('rotationPlans');
+    const newPlan: RotationPlan = {
       ...plan,
       id: this.generateId(),
       createdAt: new Date().toISOString(),
@@ -596,9 +622,9 @@ class DatabaseService {
   }
 
   // Occupancy Tracking
-  logOccupancy(log) {
-    const logs = this.readTable('occupancyLogs');
-    const newLog = {
+  logOccupancy(log: Omit<OccupancyLog, 'id' | 'timestamp'>): OccupancyLog {
+    const logs = this.readTable<OccupancyLog>('occupancyLogs');
+    const newLog: OccupancyLog = {
       ...log,
       id: this.generateId(),
       timestamp: new Date().toISOString()
@@ -608,8 +634,8 @@ class DatabaseService {
     return newLog;
   }
 
-  getOccupancyHistory(shedId, partitionId, startDate, endDate) {
-    const logs = this.readTable('occupancyLogs');
+  getOccupancyHistory(shedId?: string, partitionId?: string, startDate?: string, endDate?: string): OccupancyLog[] {
+    const logs = this.readTable<OccupancyLog>('occupancyLogs');
     return logs.filter(log => {
       const timestamp = new Date(log.timestamp);
       return (
@@ -621,7 +647,7 @@ class DatabaseService {
     });
   }
 
-  clearAll() {
+  clearAll(): boolean {
     try {
       const allTables = [
         'goats', 'weightRecords', 'healthRecords', 'breedingRecords',
@@ -629,12 +655,12 @@ class DatabaseService {
         'sheds', 'partitions', 'pastures', 'pastureHealth',
         'grazingLogs', 'rotationPlans', 'occupancyLogs'
       ];
-      
+
       allTables.forEach(table => {
         this.writeTable(table, []);
       });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error clearing data:', error);
       return false;
     }
@@ -645,11 +671,11 @@ class DatabaseService {
    * @param {string} oldPath - The old database path
    * @returns {boolean} - Success status
    */
-  static async migrateDatabase(oldPath, farmData, newBasePath) {
+  static async migrateDatabase(oldPath: string, farmData: FarmMeta, newBasePath: string): Promise<boolean> {
     try {
       // Create new database instance with new path structure
       const newDb = new DatabaseService(farmData, newBasePath);
-      
+
       // If old path is same as new path, no migration needed
       if (oldPath === newDb.dbPath) {
         return true;
@@ -667,13 +693,17 @@ class DatabaseService {
       }
 
       // Copy all database files
-      const tables = ['goats', 'weightRecords', 'healthRecords', 'breedingRecords', 
-                     'financeRecords', 'feeds', 'feedPlans', 'feedLogs', 'media'];
-      
+      const tables = [
+        'goats', 'weightRecords', 'healthRecords', 'breedingRecords',
+        'financeRecords', 'feeds', 'feedPlans', 'feedLogs', 'media',
+        'sheds', 'partitions', 'pastures', 'pastureHealth',
+        'grazingLogs', 'rotationPlans', 'occupancyLogs'
+      ];
+
       for (const table of tables) {
         const oldTablePath = path.join(oldPath, `${table}.json`);
         const newTablePath = path.join(newDb.dbPath, `${table}.json`);
-        
+
         if (fs.existsSync(oldTablePath)) {
           fs.copyFileSync(oldTablePath, newTablePath);
         } else {
@@ -688,11 +718,11 @@ class DatabaseService {
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during database migration:', error);
       return false;
     }
   }
 }
 
-module.exports = DatabaseService;
+export { DatabaseService };

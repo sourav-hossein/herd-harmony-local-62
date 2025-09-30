@@ -20,7 +20,7 @@ import {
   Edit,
   Trash
 } from 'lucide-react';
-import { Goat, HealthRecord } from '@/types/goat';
+import { Goat, HealthRecord } from '@herd-harmony/shared-types/goat';
 import { healthAI, HealthSuggestion } from '@/lib/healthAI';
 import { useToast } from '@/hooks/use-toast';
 

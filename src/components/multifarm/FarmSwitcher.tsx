@@ -25,7 +25,7 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
-import { FarmMeta, FarmStats } from '@/types/farm';
+import { FarmMeta, FarmStats } from '@herd-harmony/shared-types/farm';
 import FarmWizard from './FarmWizard';
 import { formatDistanceToNow } from 'date-fns';
 

@@ -19,7 +19,7 @@ import {
   Download,
   Eye
 } from 'lucide-react';
-import { MediaFile, MediaUploadProgress, MediaGalleryConfig } from '@/types/goat';
+import { MediaFile, MediaUploadProgress, MediaGalleryConfig } from '@herd-harmony/shared-types/goat';
 import { useImageStorage } from '@/hooks/useImageStorage';
 
 interface MediaGalleryProps {

@@ -11,7 +11,7 @@ import FeedPlans from './FeedPlans';
 import { FeedUsage } from './FeedUsage';
 import { useGoatContext } from '@/context/GoatContext';
 import { NutritionAI } from '@/lib/nutritionAI';
-import { Feed, FeedPlan, FeedLog } from '@/types/goat';
+import { Feed, FeedPlan, FeedLog } from '@herd-harmony/shared-types/goat';
 
 export const FeedDashboard: React.FC = () => {
   const { 

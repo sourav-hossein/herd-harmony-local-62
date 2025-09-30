@@ -1,6 +1,6 @@
 
-import { Feed, FeedPlan, FeedLog, Goat } from '@/types/goat';
-import { FinanceRecord } from '@/types/finance';
+import { Feed, FeedPlan, FeedLog, Goat } from '@herd-harmony/shared-types/goat';
+import { FinanceRecord } from '@herd-harmony/shared-types/finance';
 
 export interface NutritionInsight {
   type: 'warning' | 'suggestion' | 'info';

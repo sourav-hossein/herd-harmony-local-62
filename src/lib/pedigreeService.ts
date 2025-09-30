@@ -1,7 +1,7 @@
 
 import { Node, Edge, Position } from 'reactflow';
-import { Goat } from '@/types/goat';
-import { PedigreeNodeData, PedigreeTree } from '@/types/pedigree';
+import { Goat } from '@herd-harmony/shared-types/goat';
+import { PedigreeNodeData, PedigreeTree } from '@herd-harmony/shared-types/pedigree';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 

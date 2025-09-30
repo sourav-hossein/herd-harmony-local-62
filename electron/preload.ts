@@ -1,8 +1,9 @@
-const { contextBridge, ipcRenderer } = require('electron');
+import { contextBridge, ipcRenderer } from 'electron';
+import { ElectronAPI } from './src/types/electron.d';
 
 console.log('Exposing APIs to renderer ...');
 
-contextBridge.exposeInMainWorld('electronAPI', {
+const electronAPI: ElectronAPI = {
   isReady: () => ipcRenderer.invoke('app:isReady'),
   isElectron: true,
 
@@ -169,6 +170,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on(channel, (_event, ...args) => callback(...args));
     return () => ipcRenderer.removeAllListeners(channel);
   },
-});
+};
 
-
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);

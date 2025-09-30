@@ -23,7 +23,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@herd-harmony/shared-types": ["./packages/shared-types/src"]
     }
   },
   "include": ["src"]

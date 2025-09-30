@@ -15,7 +15,7 @@ import 'reactflow/dist/style.css';
 import { PedigreeService } from '@/lib/pedigreeService';
 
 import { useGoatData } from '@/hooks/useDatabase';
-import { Goat } from '@/types/goat';
+import { Goat } from '@herd-harmony/shared-types/goat';
 import GoatNode from './GoatNode';
 import PedigreeToolbar from './PedigreeToolbar';
 import { Skeleton } from '@/components/ui/skeleton';

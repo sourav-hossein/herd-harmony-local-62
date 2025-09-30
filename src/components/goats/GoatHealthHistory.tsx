@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Stethoscope, Calendar, AlertCircle, CheckCircle, Clock, Brain, Lightbulb } from 'lucide-react';
-import { Goat, HealthRecord } from '@/types/goat';
+import { Goat, HealthRecord } from '@herd-harmony/shared-types/goat';
 import { healthAI } from '@/lib/healthAI';
 
 interface GoatHealthHistoryProps {

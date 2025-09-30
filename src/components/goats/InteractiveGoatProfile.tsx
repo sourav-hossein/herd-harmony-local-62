@@ -20,7 +20,7 @@ import {
   Activity,
   Dna
 } from 'lucide-react';
-import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@/types/goat';
+import { Goat, WeightRecord, HealthRecord, BreedingRecord } from '@herd-harmony/shared-types/goat';
 import { InteractiveGeneralTab } from './InteractiveGeneralTab';
 import { InteractiveWeightTab } from './InteractiveWeightTab';
 import { InteractiveHealthTab } from './InteractiveHealthTab';
@@ -29,7 +29,7 @@ import { InteractiveMediaTab } from './InteractiveMediaTab';
 import PedigreeAnalyzer from '../pedigree/PedigreeAnalyzer';
 import FullPedigreeTree from '../pedigree/FullPedigreeTree'; // Import the new component
 import { useGoatContext } from '@/context/GoatContext';
-import { MediaFile } from '@/types/goat';
+import { MediaFile } from '@herd-harmony/shared-types/goat';
 
 interface InteractiveGoatProfileProps {
   goat: Goat | null;

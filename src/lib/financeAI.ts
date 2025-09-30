@@ -1,5 +1,5 @@
 
-import { FinanceRecord, FinanceStats, FinanceInsight } from '@/types/finance';
+import { FinanceRecord, FinanceStats, FinanceInsight } from '@herd-harmony/shared-types/finance';
 
 export class FinanceAI {
   static generateInsights(records: FinanceRecord[], stats: FinanceStats): FinanceInsight[] {
