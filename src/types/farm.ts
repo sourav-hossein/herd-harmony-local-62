@@ -83,14 +83,16 @@ export interface Pasture {
   polygon: number[][]; // [ [lat, lng], [lat, lng], ... ]
   notes?: string;
   grassType?: string;
-  carryingCapacity?: number; // animals per hectare
+  carryingCapacity?: number;
   rotationSchedule?: {
     daysPerRotation: number;
     restPeriod: number;
   };
-  currentlyGrazing?: string[]; // goat IDs
+  currentlyGrazing?: string[];
   lastGrazedAt?: string;
-  screenshot?: string; // base64 screenshot for offline view
+  screenshot?: string;
+  center?: [number, number]; // Legacy support
+  radiusMeters?: number; // Legacy support
   createdAt: string;
   updatedAt?: string;
 }

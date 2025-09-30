@@ -375,13 +375,16 @@ export default function FarmWizard({ onSubmit }: FarmWizardProps) {
                   zoom={mapData.zoom}
                   style={{ height: '100%', width: '100%' }}
                   whenReady={handleMapMove}
-                  onMoveEnd={handleMapMove}
-                  onZoomEnd={handleMapMove}
                 >
                   <TileLayer
                     ref={tileLayerRef}
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    eventHandlers={{
+                      load: handleMapMove,
+                      moveend: handleMapMove,
+                      zoomend: handleMapMove,
+                    }}
                   />
                   <FeatureGroup>
                     <EditControl

@@ -44,6 +44,7 @@ export interface Pasture {
   id: string;
   name: string;
   farmId: string;
+  polygon: number[][]; // [ [lat, lng], [lat, lng], ... ] - PRIMARY geometry
   size?: number;
   capacity?: number;
   currentOccupancy?: number;
@@ -52,9 +53,11 @@ export interface Pasture {
   lastGrazed?: Date;
   restPeriod?: number;
   notes?: string;
+  // Legacy support for circular pastures (deprecated in favor of polygon)
   center?: [number, number];
   radiusMeters?: number;
-  coordinates?: Array<[number, number]>;
+  coordinates?: Array<[number, number]>; // Alias for polygon
+  screenshot?: string; // base64 screenshot for offline view
   createdAt: Date;
   updatedAt: Date;
 }

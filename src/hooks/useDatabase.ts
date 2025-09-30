@@ -45,10 +45,10 @@ export function useDatabase<T>(tableName: string, initialValue: T, options: { en
           result = await window.electronAPI!.getBreedingRecords();
           break;
         case 'heatCycles':
-          result = await window.electronAPI!.getHeatCycles();
+          result = await (window.electronAPI as any)!.getHeatCycles();
           break;
         case 'kiddingRecords':
-          result = await window.electronAPI!.getKiddingRecords();
+          result = await (window.electronAPI as any)!.getKiddingRecords();
           break;
         case 'financeRecords':
           result = await window.electronAPI!.getFinanceRecords();
@@ -217,19 +217,19 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
 
     // Heat cycle operations
     addHeatCycle: async (record: any) => {
-      const newRecord = await window.electronAPI!.addHeatCycle(record);
+      const newRecord = await (window.electronAPI as any)!.addHeatCycle(record);
       await heatCycles.reload();
       return newRecord;
     },
 
     updateHeatCycle: async (id: string, updates: any) => {
-      const updatedRecord = await window.electronAPI!.updateHeatCycle(id, updates);
+      const updatedRecord = await (window.electronAPI as any)!.updateHeatCycle(id, updates);
       await heatCycles.reload();
       return updatedRecord;
     },
 
     deleteHeatCycle: async (id: string) => {
-      const success = await window.electronAPI!.deleteHeatCycle(id);
+      const success = await (window.electronAPI as any)!.deleteHeatCycle(id);
       if (success) {
         await heatCycles.reload();
       }
@@ -238,19 +238,19 @@ export function useGoatData(options: { enabled: boolean } = { enabled: true }) {
 
     // Kidding record operations
     addKiddingRecord: async (record: any) => {
-      const newRecord = await window.electronAPI!.addKiddingRecord(record);
+      const newRecord = await (window.electronAPI as any)!.addKiddingRecord(record);
       await kiddingRecords.reload();
       return newRecord;
     },
 
     updateKiddingRecord: async (id: string, updates: any) => {
-      const updatedRecord = await window.electronAPI!.updateKiddingRecord(id, updates);
+      const updatedRecord = await (window.electronAPI as any)!.updateKiddingRecord(id, updates);
       await kiddingRecords.reload();
       return updatedRecord;
     },
 
     deleteKiddingRecord: async (id: string) => {
-      const success = await window.electronAPI!.deleteKiddingRecord(id);
+      const success = await (window.electronAPI as any)!.deleteKiddingRecord(id);
       if (success) {
         await kiddingRecords.reload();
       }

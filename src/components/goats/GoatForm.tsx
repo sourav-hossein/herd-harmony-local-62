@@ -68,7 +68,7 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
         notes: goat.notes || '',
         fatherId: goat.fatherId,
         motherId: goat.motherId,
-        genetics: goat.genetics || undefined
+        genetics: goat.genetics || {}
       });
     } else {
       setFormData({
@@ -316,7 +316,7 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
           {/* Genetics Section */}
           <GeneticsSection
             genetics={formData.genetics || {}}
-            onGeneticsChange={(genetics) => setFormData({ ...formData, genetics })}
+            onGeneticsChange={(genetics) => setFormData({ ...formData, genetics: genetics || {} })}
           />
 
           {/* Parentage Information */}

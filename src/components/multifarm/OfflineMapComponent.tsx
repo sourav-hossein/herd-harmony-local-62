@@ -174,11 +174,11 @@ export default function OfflineMapComponent({
           center={getMapCenter()}
           zoom={getMapZoom()}
           style={{ height: '100%', width: '100%' }}
-          whenReady={(map) => {
+          whenReady={() => {
             // Fit to farm boundary if available
-            if (farmData?.metadata?.farmBoundary && farmData.metadata.farmBoundary.length > 0) {
+            if (mapRef.current && farmData?.metadata?.farmBoundary && farmData.metadata.farmBoundary.length > 0) {
               const bounds = L.latLngBounds(farmData.metadata.farmBoundary as L.LatLngExpression[]);
-              map.target.fitBounds(bounds, { padding: [20, 20] });
+              mapRef.current.fitBounds(bounds, { padding: [20, 20] });
             }
           }}
         >
