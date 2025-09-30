@@ -15,9 +15,10 @@ export class GrazingService {
   // Calculate pasture area from geometry
   calculatePastureArea(pasture: Pasture): number {
     try {
-      if (pasture.center && pasture.radiusMeters) {
+      const p = pasture as any;
+      if (p.center && p.radiusMeters) {
         // Circle area calculation
-        const circle = turf.circle([pasture.center.lon, pasture.center.lat], pasture.radiusMeters / 1000, { units: 'kilometers' });
+        const circle = turf.circle([p.center.lon, p.center.lat], p.radiusMeters / 1000, { units: 'kilometers' });
         return turf.area(circle) / 10000; // Convert to hectares
       }
       return 0;

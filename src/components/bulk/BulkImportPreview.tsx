@@ -30,7 +30,7 @@ export function BulkImportPreview<T extends Record<string, unknown>>({
   onCancel, 
   isProcessing 
 }: BulkImportPreviewProps<T>) {
-  const errorRows = errors.filter(e => e.message !== e.message.includes('will default'));
+  const errorRows = errors.filter(e => !e.message.includes('will default'));
   const warningRows = errors.filter(e => e.message.includes('will default') || e.message.includes('warning'));
   const canImport = errorRows.length === 0;
 

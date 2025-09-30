@@ -68,13 +68,7 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
         notes: goat.notes || '',
         fatherId: goat.fatherId,
         motherId: goat.motherId,
-        genetics: goat.genetics || {
-          coatColor: goat.color || '',
-          hornStatus: goat.hornStatus || 'horned',
-          fertilityScore: 5,
-          milkYieldGenetics: 100,
-          hornGenotype: 'hh' 
-        }
+        genetics: goat.genetics || undefined
       });
     } else {
       setFormData({
@@ -321,7 +315,7 @@ export default function GoatForm({ goat, isOpen, onClose, onSubmit }: GoatFormPr
 
           {/* Genetics Section */}
           <GeneticsSection
-            genetics={formData.genetics}
+            genetics={formData.genetics || {}}
             onGeneticsChange={(genetics) => setFormData({ ...formData, genetics })}
           />
 

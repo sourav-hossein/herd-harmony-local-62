@@ -41,7 +41,7 @@ export interface Goat {
   birthDate: Date;
   birthWeight?: number;
   gender: 'male' | 'female';
-  sex?: 'male' | 'female'; // Alias for compatibility
+  sex?: 'male' | 'female';
   castrated?: boolean;
   status: 'active' | 'sold' | 'deceased' | 'archived';
   breedingStatus: '' | 'pregnant' | 'lactating' | 'resting' | 'kid' | 'active' | 'not_breeding';
@@ -60,11 +60,9 @@ export interface Goat {
   shedId?: string;
   partitionId?: string;
   pastureId?: string;
-  // Media properties
   imageId?: string;
   photoPath?: string;
   mediaFiles?: MediaFile[];
-  // Genetic traits for pedigree
   genetics?: {
     coatColor?: string;
     hornStatus?: 'horned' | 'polled' | 'disbudded';
@@ -99,58 +97,10 @@ export interface HealthRecord {
   cost?: number;
   veterinarian?: string;
   medications?: string;
-  medicine?: string; // Alias for medications
-  treatment?: string; // AI field for treatment details
+  medicine?: string;
+  treatment?: string;
   notes?: string;
   status: 'completed' | 'scheduled' | 'overdue';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface HeatCycle {
-  id: string;
-  goatId: string;
-  heatDate: Date;
-  expectedNextHeat: Date;
-  signs: string[];
-  intensity: 'light' | 'moderate' | 'strong';
-  notes?: string;
-  createdAt: Date;
-}
-
-export interface KidDetail {
-  id: string;
-  name: string;
-  gender: 'male' | 'female';
-  birthWeight: number;
-  status: 'alive' | 'deceased' | 'weak';
-  notes?: string;
-}
-
-export interface KiddingRecord {
-  id: string;
-  breedingId: string;
-  birthDate: Date;
-  totalKids: number;
-  kidDetails: KidDetail[];
-  complications?: string;
-  vetAssistance: boolean;
-  notes?: string;
-  createdAt: Date;
-}
-
-export interface BreedingRecord {
-  id: string;
-  damId: string; 
-  sireId: string; 
-  breedingDate: Date;
-  method: 'natural' | 'artificial';
-  expectedDueDate?: Date;
-  actualBirthDate?: Date;
-  numberOfKids?: number;
-  kidIds?: string[];
-  notes?: string;
-  status: 'planned' | 'confirmed' | 'completed' | 'failed';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -203,15 +153,19 @@ export interface FeedPlanItem {
   frequency: 'daily' | 'weekly' | 'monthly';
   timesPerDay?: number;
 }
-export interface Farm {
+
+export interface FeedLog {
   id: string;
-  name: string;
-  location: string;
-  partitions: number;
-  size: number;
+  goatId: string;
+  feedId: string;
+  amountUsed?: number;
+  unit: string;
+  date: Date;
+  cost?: number;
+  notes?: string;
   createdAt: Date;
-  updatedAt: Date;
 }
+
 export interface KnownFarmer {
   id: string;
   name: string;
@@ -222,49 +176,3 @@ export interface KnownFarmer {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export interface FeedLog {
-  id: string;
-  goatId: string;
-  feedId: string;
-  amountUsed?: number; 
-  unit: string;
-  date: Date;
-  cost?: number;
-  notes?: string;
-  createdAt: Date;
-}
-
-// Growth and breeding types for pedigree system
-export interface BreedStandard {
-  id: string;
-  breedName: string;
-  milestones: {
-    ageMonths: number;
-    expectedWeight: number;
-    minWeight: number;
-    maxWeight: number;
-  }[];
-  isCustom: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface GrowthPerformance {
-  goatId: string;
-  currentScore: number;
-  trend: 'improving' | 'stable' | 'declining';
-  status: 'above-standard' | 'on-track' | 'below-standard' | 'concerning';
-  lastCalculated: Date;
-  recommendations: string[];
-}
-
-export interface GrowthAnalytics {
-  averageHerdGPS: number;
-  topPerformers: { goatId: string; score: number }[];
-  underPerformers: { goatId: string; score: number }[];
-  growthTrends: { month: string; averageGPS: number }[];
-  breedComparison: Record<string, number>;
-}
-
-

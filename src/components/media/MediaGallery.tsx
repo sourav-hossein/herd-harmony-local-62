@@ -29,13 +29,16 @@ interface MediaGalleryProps {
   className?: string;
 }
 
-const defaultConfig: MediaGalleryConfig = {
+const defaultConfig = {
+  allowUpload: true,
+  allowDelete: true,
+  allowEdit: true,
   allowMultiple: true,
   acceptedTypes: ['image/*', 'video/*'],
   maxFileSize: 50 * 1024 * 1024, // 50MB
   maxFiles: 20,
   autoTimestamp: true,
-  defaultCategory: 'general'
+  defaultCategory: 'general' as const
 };
 
 export default function MediaGallery({
@@ -57,12 +60,12 @@ export default function MediaGallery({
     const newFiles: MediaFile[] = [];
     const progressItems: MediaUploadProgress[] = [];
 
-    for (let i = 0; i < Math.min(files.length, finalConfig.maxFiles - mediaFiles.length); i++) {
+    for (let i = 0; i < Math.min(files.length, (finalConfig.maxFiles || 20) - mediaFiles.length); i++) {
       const file = files[i];
       
       // Validate file
-      if (file.size > finalConfig.maxFileSize) {
-        alert(`File ${file.name} is too large. Max size is ${finalConfig.maxFileSize / (1024 * 1024)}MB`);
+      if (file.size > (finalConfig.maxFileSize || 50 * 1024 * 1024)) {
+        alert(`File ${file.name} is too large. Max size is ${(finalConfig.maxFileSize || 50 * 1024 * 1024) / (1024 * 1024)}MB`);
         continue;
       }
 
@@ -71,8 +74,9 @@ export default function MediaGallery({
 
       // Add to progress tracking
       progressItems.push({
-        fileId,
+        fileName: file.name,
         progress: 0,
+        total: file.size,
         status: 'uploading'
       });
 
@@ -83,30 +87,32 @@ export default function MediaGallery({
 
         const mediaFile: MediaFile = {
           id: fileId,
+          name: file.name,
+          path: fileId,
           type: isVideo ? 'video' : 'image',
           filename: file.name,
           url,
-          timestamp: finalConfig.autoTimestamp ? new Date() : new Date(),
-          category: finalConfig.defaultCategory,
+          timestamp: new Date(),
+          category: (finalConfig.defaultCategory as any) || 'general',
           tags: [],
           size: file.size,
           thumbnailUrl: isVideo ? undefined : url,
           createdAt: new Date(),
-          goatId: '', // Set to appropriate goatId if available
-          primary: false, // Default value, update as needed
-          uploadDate: new Date() // Set to current date
+          goatId: '',
+          primary: false,
+          uploadDate: new Date()
         };
 
         newFiles.push(mediaFile);
         
         // Update progress
         setUploadProgress(prev => 
-          prev.map(p => p.fileId === fileId ? { ...p, progress: 100, status: 'complete' } : p)
+          prev.map(p => p.fileName === file.name ? { ...p, progress: 100, status: 'complete' as const } : p)
         );
       } catch (error) {
         console.error('Error uploading file:', error);
         setUploadProgress(prev => 
-          prev.map(p => p.fileId === fileId ? { ...p, status: 'error', error: 'Upload failed' } : p)
+          prev.map(p => p.fileName === file.name ? { ...p, status: 'error' as const, error: 'Upload failed' } : p)
         );
       }
     }
@@ -149,7 +155,7 @@ export default function MediaGallery({
           <CardTitle className="flex items-center space-x-2">
             <Camera className="w-5 h-5" />
             <span>Media Gallery</span>
-            <Badge variant="outline">{mediaFiles.length}/{finalConfig.maxFiles}</Badge>
+            <Badge variant="outline">{mediaFiles.length}/{finalConfig.maxFiles || 20}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -163,15 +169,15 @@ export default function MediaGallery({
               Click to upload or drag and drop
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Images and videos up to {finalConfig.maxFileSize / (1024 * 1024)}MB
+              Images and videos up to {(finalConfig.maxFileSize || 50 * 1024 * 1024) / (1024 * 1024)}MB
             </p>
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
-            multiple={finalConfig.allowMultiple}
-            accept={finalConfig.acceptedTypes.join(',')}
+            multiple={finalConfig.allowMultiple || false}
+            accept={(finalConfig.acceptedTypes || ['image/*', 'video/*']).join(',')}
             onChange={handleFileSelect}
             className="hidden"
           />
@@ -180,9 +186,9 @@ export default function MediaGallery({
           {uploadProgress.length > 0 && (
             <div className="space-y-2">
               {uploadProgress.map(progress => (
-                <div key={progress.fileId} className="space-y-1">
+                <div key={progress.fileName} className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span>Uploading...</span>
+                    <span>{progress.fileName}</span>
                     <span>{progress.progress}%</span>
                   </div>
                   <Progress value={progress.progress} className="h-2" />

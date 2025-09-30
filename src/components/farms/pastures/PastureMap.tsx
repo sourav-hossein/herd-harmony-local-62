@@ -52,7 +52,7 @@ function MapClickHandler({ onMapClick }: ClickHandler) {
 }
 
 export default function PastureMap() {
-  const { farmData, updateFarmData } = useFarm();
+  const { farmData, updateFarmData, activeFarmData } = useFarm();
   const [isCreating, setIsCreating] = useState(false);
   const [newPasture, setNewPasture] = useState({
     name: '',
@@ -60,8 +60,8 @@ export default function PastureMap() {
     radiusMeters: 100,
   });
 
-  const pastures = farmData?.pastures || [];
-  const goats = farmData?.goats || [];
+  const pastures = ((activeFarmData as any)?.pastures || []) as Pasture[];
+  const goats = (activeFarmData as any)?.goats || [];
   const farmLocation = farmData?.metadata?.location;
 
   // Default map center
@@ -96,16 +96,19 @@ export default function PastureMap() {
   const handleCreatePasture = async () => {
     if (!newPasture.name.trim() || !newPasture.center.lat) return;
 
-    const pasture: Pasture = {
+    const pasture = {
       id: `pasture_${Date.now()}`,
-      farmId: farmData?.metadata?.id || '',
+      farmId: (farmData as any)?.metadata?.id || '',
       name: newPasture.name.trim(),
       center: newPasture.center,
       radiusMeters: newPasture.radiusMeters,
-      createdAt: new Date().toISOString(),
-    };
+      status: 'active' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as Pasture;
 
     await updateFarmData({
+      ...(activeFarmData as any),
       pastures: [...pastures, pasture],
     });
 
@@ -132,6 +135,7 @@ export default function PastureMap() {
     const updatedPastures = pastures.filter(p => p.id !== pastureId);
 
     await updateFarmData({
+      ...(activeFarmData as any),
       pastures: updatedPastures,
       goats: updatedGoats,
     });
